@@ -1,0 +1,11 @@
+{
+  "name": "fittrack",
+  "version": "1.0.0",
+  "description": "Full-stack MERN Fitness Tracker",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "start:backend": "npm start --prefix backend"
+  }
+}
