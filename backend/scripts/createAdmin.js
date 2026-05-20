@@ -9,7 +9,7 @@ const User = require('../models/User');
 
 const ADMIN = {
   name: 'Admin',
-  email: 'admin@fittrack.com',
+  email: 'admin@FitStack.com',
   password: 'Admin@123',
   role: 'admin',
 };

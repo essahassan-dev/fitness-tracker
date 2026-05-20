@@ -10,6 +10,9 @@ import { formatDate, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
 import ConfirmDialog from '../../components/UI/ConfirmDialog';
+import ExportButton from '../../components/UI/ExportButton';
+import { exportProgressPDF, exportProgressCSV } from '../../utils/exportUtils';
+import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/UI/Modal';
 import { defaultChartOptions, lineDataset, CHART_COLORS } from '../../utils/chartConfig';
 import '../../utils/chartConfig';
@@ -147,6 +150,7 @@ const ProgressForm = ({ isOpen, onClose, onSuccess, entry }) => {
 };
 
 const Progress = () => {
+  const { user } = useAuth();
   const [entries, setEntries] = useState([]);
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -155,6 +159,22 @@ const Progress = () => {
   const [editEntry, setEditEntry] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    try {
+      const res = await progressAPI.getAll({ limit: 1000 });
+      exportProgressPDF(res.data.data, user?.name);
+      toast.success('PDF downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const res = await progressAPI.getAll({ limit: 1000 });
+      exportProgressCSV(res.data.data);
+      toast.success('CSV downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -212,9 +232,12 @@ const Progress = () => {
           <h1 className="page-title">Progress</h1>
           <p className="page-subtitle">Track your body measurements and weight over time</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
-          <RiAddLine className="text-lg" /> Log Progress
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton onExportPDF={handleExportPDF} onExportCSV={handleExportCSV} label="Export" />
+          <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
+            <RiAddLine className="text-lg" /> Log Progress
+          </button>
+        </div>
       </div>
 
       {/* Latest stats */}

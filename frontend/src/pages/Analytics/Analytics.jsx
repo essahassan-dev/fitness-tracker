@@ -5,10 +5,13 @@ import toast from 'react-hot-toast';
 import { workoutAPI, nutritionAPI } from '../../services/api';
 import { formatDate, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
+import PremiumGate from '../../components/UI/PremiumGate';
+import { useAuth } from '../../context/AuthContext';
 import { defaultChartOptions, lineDataset, barDataset, CHART_COLORS } from '../../utils/chartConfig';
 import '../../utils/chartConfig';
 
 const Analytics = () => {
+  const { isPremium } = useAuth();
   const [workoutAnalytics, setWorkoutAnalytics] = useState(null);
   const [nutritionAnalytics, setNutritionAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,6 +173,7 @@ const Analytics = () => {
           </div>
 
           {/* Nutrition charts */}
+          <PremiumGate feature="Nutrition Analytics">
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="card">
               <h2 className="text-white font-semibold mb-4">Daily Calories Consumed</h2>
@@ -210,6 +214,7 @@ const Analytics = () => {
               )}
             </div>
           </div>
+          </PremiumGate>
 
           {/* Strength progress */}
           {workoutAnalytics?.strengthProgress?.length > 0 && (

@@ -5,9 +5,10 @@ import {
   RiCheckLine, RiCloseLine, RiEyeLine,
   RiFilterLine, RiRefreshLine, RiUserAddLine,
   RiRunLine, RiRestaurantLine, RiTimeLine,
+  RiVipCrownLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
-import { adminAPI } from '../../services/api';
+import { adminAPI, subscriptionAPI } from '../../services/api';
 import { formatDate, formatRelativeDate, getInitials, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
@@ -239,6 +240,22 @@ const AdminUsers = () => {
                           className="p-2 text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                         >
                           <RiDeleteBinLine />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const isPrem = user.subscription?.type === 'PREMIUM' && user.subscription?.status === 'ACTIVE';
+                              await subscriptionAPI.adminSet(user._id, isPrem
+                                ? { type: 'FREE', status: 'ACTIVE' }
+                                : { type: 'PREMIUM', status: 'ACTIVE', durationDays: 30 });
+                              toast.success(isPrem ? 'Downgraded to Free' : 'Upgraded to Premium');
+                              fetchUsers();
+                            } catch (err) { toast.error(getErrorMessage(err)); }
+                          }}
+                          title="Toggle Premium"
+                          className="p-2 text-dark-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                        >
+                          <RiVipCrownLine />
                         </button>
                       </div>
                     </td>

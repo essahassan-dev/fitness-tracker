@@ -10,7 +10,7 @@ const api = axios.create({
 // Attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('fittrack_token');
+    const token = localStorage.getItem('FitStack_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,8 +24,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('fittrack_token');
-      localStorage.removeItem('fittrack_user');
+      localStorage.removeItem('FitStack_token');
+      localStorage.removeItem('FitStack_user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -73,6 +73,54 @@ export const progressAPI = {
   create: (data) => api.post('/progress', data),
   update: (id, data) => api.put(`/progress/${id}`, data),
   delete: (id) => api.delete(`/progress/${id}`),
+};
+
+// Trainer
+export const trainerAPI = {
+  getMyUsers:       ()               => api.get('/trainer/my-users'),
+  getUserProgress:  (userId)         => api.get(`/trainer/my-users/${userId}/progress`),
+  getRemarks:       (userId)         => api.get(`/trainer/my-users/${userId}/remarks`),
+  sendRemark:       (userId, data)   => api.post(`/trainer/my-users/${userId}/remarks`, data),
+  getMyRemarks:     ()               => api.get('/trainer/remarks/me'),
+  getUnreadCount:   ()               => api.get('/trainer/remarks/unread'),
+  getAllTrainers:    ()               => api.get('/trainer'),
+  createTrainer:    (data)           => api.post('/trainer', data),
+  assignUser:       (data)           => api.post('/trainer/assign', data),
+  unassignUser:     (data)           => api.post('/trainer/unassign', data),
+  deleteTrainer:    (id)             => api.delete(`/trainer/${id}`),
+};
+
+// Weekly Plan
+export const weeklyPlanAPI = {
+  getCurrent:       (params)         => api.get('/weekly-plan/current', { params }),
+  regenerate:       (equipmentType)  => api.post('/weekly-plan/regenerate', { equipmentType }),
+  getHistory:       ()               => api.get('/weekly-plan/history'),
+  toggleExercise:   (planId, day, exIdx) => api.patch(`/weekly-plan/${planId}/day/${day}/exercise/${exIdx}/toggle`),
+  toggleDay:        (planId, day)    => api.patch(`/weekly-plan/${planId}/day/${day}/toggle`),
+};
+
+// Upgrade Requests
+export const upgradeAPI = {
+  submit:   (data)  => api.post('/upgrade', data),
+  getMyRequest: ()  => api.get('/upgrade/me'),
+  getAll:   (params)=> api.get('/upgrade', { params }),
+  approve:  (id, data) => api.put(`/upgrade/${id}/approve`, data),
+  reject:   (id, data) => api.put(`/upgrade/${id}/reject`, data),
+};
+
+// Subscription
+export const subscriptionAPI = {
+  getStatus:  ()               => api.get('/subscription'),
+  activate:   (days)           => api.post('/subscription/activate', { durationDays: days }),
+  cancel:     ()               => api.post('/subscription/cancel'),
+  adminSet:   (userId, data)   => api.put(`/subscription/admin/${userId}`, data),
+};
+
+// Recommendations
+export const recommendationAPI = {
+  getAll:      ()               => api.get('/recommendations'),
+  getExercises:(equipmentType)  => api.get('/recommendations/exercises', { params: { equipmentType } }),
+  getDiet:     ()               => api.get('/recommendations/diet'),
 };
 
 // Admin

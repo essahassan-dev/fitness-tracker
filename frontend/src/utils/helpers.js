@@ -23,18 +23,22 @@ export const formatCalories = (cal) => {
   return Math.round(cal).toLocaleString();
 };
 
-export const getMoodEmoji = (mood) => {
-  const moods = { great: '🔥', good: '😊', okay: '😐', tired: '😴', bad: '😞' };
+// Returns text label instead of emoji
+export const getMoodLabel = (mood) => {
+  const moods = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', bad: 'Bad' };
   return moods[mood] || '';
 };
 
+// Keep for backward compat — returns empty string (no emoji)
+export const getMoodEmoji = () => '';
+
 export const getCategoryColor = (category) => {
   const colors = {
-    strength: 'text-blue-400 bg-blue-400/10',
-    cardio: 'text-orange-400 bg-orange-400/10',
+    strength:    'text-blue-400 bg-blue-400/10',
+    cardio:      'text-orange-400 bg-orange-400/10',
     flexibility: 'text-purple-400 bg-purple-400/10',
-    sports: 'text-yellow-400 bg-yellow-400/10',
-    other: 'text-gray-400 bg-gray-400/10',
+    sports:      'text-yellow-400 bg-yellow-400/10',
+    other:       'text-gray-400 bg-gray-400/10',
   };
   return colors[category] || colors.other;
 };
@@ -42,16 +46,17 @@ export const getCategoryColor = (category) => {
 export const getMealTypeColor = (type) => {
   const colors = {
     breakfast: 'text-yellow-400 bg-yellow-400/10',
-    lunch: 'text-green-400 bg-green-400/10',
-    dinner: 'text-blue-400 bg-blue-400/10',
-    snack: 'text-purple-400 bg-purple-400/10',
+    lunch:     'text-green-400 bg-green-400/10',
+    dinner:    'text-blue-400 bg-blue-400/10',
+    snack:     'text-purple-400 bg-purple-400/10',
   };
   return colors[type] || 'text-gray-400 bg-gray-400/10';
 };
 
+// Returns icon name string — components use react-icons directly
 export const getMealTypeIcon = (type) => {
-  const icons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍎' };
-  return icons[type] || '🍽️';
+  const icons = { breakfast: 'sunrise', lunch: 'sun', dinner: 'moon', snack: 'apple' };
+  return icons[type] || 'restaurant';
 };
 
 export const calculateBMI = (weight, height) => {
@@ -63,19 +68,14 @@ export const calculateBMI = (weight, height) => {
 export const getBMICategory = (bmi) => {
   if (!bmi) return null;
   if (bmi < 18.5) return { label: 'Underweight', color: 'text-blue-400' };
-  if (bmi < 25) return { label: 'Normal', color: 'text-green-400' };
-  if (bmi < 30) return { label: 'Overweight', color: 'text-yellow-400' };
+  if (bmi < 25)   return { label: 'Normal',       color: 'text-green-400' };
+  if (bmi < 30)   return { label: 'Overweight',   color: 'text-yellow-400' };
   return { label: 'Obese', color: 'text-red-400' };
 };
 
 export const getInitials = (name) => {
   if (!name) return 'U';
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
 export const truncate = (str, len = 30) => {

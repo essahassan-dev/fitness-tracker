@@ -56,4 +56,22 @@ const adminOnly = (req, res, next) => {
   });
 };
 
-module.exports = { protect, adminOnly };
+// Premium-only middleware (must be used after protect)
+const premiumOnly = (req, res, next) => {
+  const sub = req.user?.subscription;
+  const isPremium =
+    sub?.type === 'PREMIUM' &&
+    sub?.status === 'ACTIVE' &&
+    (!sub?.endDate || new Date() <= new Date(sub.endDate));
+
+  if (isPremium || req.user?.role === 'admin') {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'Premium subscription required',
+    code: 'PREMIUM_REQUIRED',
+  });
+};
+
+module.exports = { protect, adminOnly, premiumOnly };

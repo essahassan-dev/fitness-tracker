@@ -4,7 +4,7 @@ const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('fittrack_theme') || 'dark';
+    return localStorage.getItem('FitStack_theme') || 'dark';
   });
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const ThemeProvider = ({ children }) => {
       root.classList.add('light');
       root.classList.remove('dark');
     }
-    localStorage.setItem('fittrack_theme', theme);
+    localStorage.setItem('FitStack_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));

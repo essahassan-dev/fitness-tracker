@@ -1,19 +1,34 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   RiAddLine, RiEditLine, RiDeleteBinLine, RiRestaurantLine,
-  RiCalendarLine, RiFireLine,
+  RiCalendarLine, RiFireLine, RiSunLine, RiMoonLine, RiAppleLine,
+  RiSunFoggyLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 import { nutritionAPI } from '../../services/api';
-import { formatDate, getMealTypeColor, getMealTypeIcon, getErrorMessage } from '../../utils/helpers';
+import { formatDate, getMealTypeColor, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
 import ConfirmDialog from '../../components/UI/ConfirmDialog';
 import NutritionForm from './NutritionForm';
+import ExportButton from '../../components/UI/ExportButton';
+import { exportNutritionPDF, exportNutritionCSV } from '../../utils/exportUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const MEAL_TYPES = ['all', 'breakfast', 'lunch', 'dinner', 'snack'];
 
+const MealIcon = ({ type, className = 'text-lg' }) => {
+  const icons = {
+    breakfast: <RiSunFoggyLine className={className} />,
+    lunch:     <RiSunLine className={className} />,
+    dinner:    <RiMoonLine className={className} />,
+    snack:     <RiAppleLine className={className} />,
+  };
+  return icons[type] || <RiRestaurantLine className={className} />;
+};
+
 const Nutrition = () => {
+  const { user } = useAuth();
   const [entries, setEntries] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +38,22 @@ const Nutrition = () => {
   const [editEntry, setEditEntry] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleExportPDF = async () => {
+    try {
+      const res = await nutritionAPI.getAll({ limit: 1000 });
+      exportNutritionPDF(res.data.data, user?.name);
+      toast.success('PDF downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const res = await nutritionAPI.getAll({ limit: 1000 });
+      exportNutritionCSV(res.data.data);
+      toast.success('CSV downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -67,9 +98,12 @@ const Nutrition = () => {
           <h1 className="page-title">Nutrition</h1>
           <p className="page-subtitle">Track your daily food intake and macros</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
-          <RiAddLine className="text-lg" /> Log Meal
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton onExportPDF={handleExportPDF} onExportCSV={handleExportCSV} label="Export" />
+          <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
+            <RiAddLine className="text-lg" /> Log Meal
+          </button>
+        </div>
       </div>
 
       {/* Daily Summary */}
@@ -142,7 +176,12 @@ const Nutrition = () => {
                 : 'bg-dark-800 text-dark-400 hover:text-white hover:bg-dark-700'
             }`}
           >
-            {type === 'all' ? 'All Meals' : `${getMealTypeIcon(type)} ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+            {type === 'all' ? 'All Meals' : (
+              <span className="flex items-center gap-1.5">
+                <MealIcon type={type} className="text-sm" />
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -166,7 +205,9 @@ const Nutrition = () => {
           {entries.map((entry) => (
             <div key={entry._id} className="card p-4 hover:border-dark-700 transition-colors group">
               <div className="flex items-start gap-4">
-                <div className="text-2xl flex-shrink-0 mt-0.5">{getMealTypeIcon(entry.mealType)}</div>
+                <div className="flex-shrink-0 mt-0.5">
+                    <MealIcon type={entry.mealType} className="text-2xl" />
+                  </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>

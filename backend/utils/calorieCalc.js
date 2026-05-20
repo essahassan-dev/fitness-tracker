@@ -102,11 +102,12 @@ const calcWorkoutCalories = (workout, bodyWeight = 70) => {
  * Uses Mifflin-St Jeor BMR × activity multiplier
  */
 const calcTDEE = (profile) => {
-  const { age, height, weight, goal, activityLevel } = profile || {};
-  if (!age || !height || !weight) return 2000; // default
+  const { age, height, weight, goal, activityLevel, gender } = profile || {};
+  if (!age || !height || !weight) return 2000;
 
-  // BMR (assuming male default — can be extended with gender field)
-  const bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+  // Mifflin-St Jeor with gender support
+  const base = 10 * weight + 6.25 * height - 5 * age;
+  const bmr = gender === 'female' ? base - 161 : base + 5;
 
   const multipliers = {
     sedentary:   1.2,
@@ -118,7 +119,6 @@ const calcTDEE = (profile) => {
 
   const tdee = Math.round(bmr * (multipliers[activityLevel] || 1.55));
 
-  // Adjust for goal
   if (goal === 'lose_weight')   return tdee - 500;
   if (goal === 'gain_muscle')   return tdee + 300;
   return tdee;

@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem('fittrack_token');
+    const token = localStorage.getItem('FitStack_token');
     if (!token) {
       setLoading(false);
       return;
@@ -20,10 +20,10 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       setIsAuthenticated(true);
       // Keep localStorage in sync with fresh server data
-      localStorage.setItem('fittrack_user', JSON.stringify(data.user));
+      localStorage.setItem('FitStack_user', JSON.stringify(data.user));
     } catch {
-      localStorage.removeItem('fittrack_token');
-      localStorage.removeItem('fittrack_user');
+      localStorage.removeItem('FitStack_token');
+      localStorage.removeItem('FitStack_user');
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const { data } = await authAPI.login(credentials);
-    localStorage.setItem('fittrack_token', data.token);
-    localStorage.setItem('fittrack_user', JSON.stringify(data.user));
+    localStorage.setItem('FitStack_token', data.token);
+    localStorage.setItem('FitStack_user', JSON.stringify(data.user));
     setUser(data.user);
     setIsAuthenticated(true);
     return data;
@@ -46,27 +46,35 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const { data } = await authAPI.register(userData);
-    localStorage.setItem('fittrack_token', data.token);
-    localStorage.setItem('fittrack_user', JSON.stringify(data.user));
+    localStorage.setItem('FitStack_token', data.token);
+    localStorage.setItem('FitStack_user', JSON.stringify(data.user));
     setUser(data.user);
     setIsAuthenticated(true);
     return data;
   };
 
   const logout = () => {
-    localStorage.removeItem('fittrack_token');
-    localStorage.removeItem('fittrack_user');
+    localStorage.removeItem('FitStack_token');
+    localStorage.removeItem('FitStack_user');
     setUser(null);
     setIsAuthenticated(false);
   };
 
   const updateUser = (updatedUser) => {
     setUser(updatedUser);
-    localStorage.setItem('fittrack_user', JSON.stringify(updatedUser));
+    localStorage.setItem('FitStack_user', JSON.stringify(updatedUser));
+  };
+
+  const isPremium = () => {
+    const sub = user?.subscription;
+    if (!sub || sub.type !== 'PREMIUM') return false;
+    if (sub.status !== 'ACTIVE') return false;
+    if (sub.endDate && new Date() > new Date(sub.endDate)) return false;
+    return true;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser, loadUser }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser, loadUser, isPremium }}>
       {children}
     </AuthContext.Provider>
   );

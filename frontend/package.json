@@ -1,5 +1,5 @@
 {
-  "name": "fitness-tracker-frontend",
+  "name": "fitstack-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,6 +13,9 @@
     "axios": "^1.6.8",
     "chart.js": "^4.4.2",
     "date-fns": "^3.6.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "papaparse": "^5.5.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",

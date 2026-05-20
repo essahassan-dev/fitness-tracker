@@ -4,14 +4,14 @@ import {
   RiArrowLeftLine, RiRunLine, RiRestaurantLine, RiLineChartLine,
   RiShieldLine, RiDeleteBinLine, RiCheckLine, RiCloseLine,
   RiScalesLine, RiFireLine, RiTimeLine, RiCalendarLine,
-  RiUserLine, RiTrophyLine,
+  RiUserLine, RiTrophyLine, RiSunFoggyLine, RiSunLine, RiMoonLine, RiAppleLine,
 } from 'react-icons/ri';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
 import {
   formatDate, formatRelativeDate, getInitials,
-  getCategoryColor, getMealTypeIcon, getErrorMessage,
+  getCategoryColor, getMealTypeColor, getErrorMessage,
 } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import ConfirmDialog from '../../components/UI/ConfirmDialog';
@@ -126,7 +126,13 @@ const NutritionTab = ({ userId }) => {
             <div key={e._id} className="bg-dark-800/50 border border-dark-700 rounded-xl p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{getMealTypeIcon(e.mealType)}</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${getMealTypeColor(e.mealType)}`}>
+                    {e.mealType === 'breakfast' && <RiSunFoggyLine className="text-lg" />}
+                    {e.mealType === 'lunch'     && <RiSunLine     className="text-lg" />}
+                    {e.mealType === 'dinner'    && <RiMoonLine    className="text-lg" />}
+                    {e.mealType === 'snack'     && <RiAppleLine   className="text-lg" />}
+                    {!['breakfast','lunch','dinner','snack'].includes(e.mealType) && <RiRestaurantLine className="text-lg" />}
+                  </div>
                   <div>
                     <p className="text-white font-medium capitalize">{e.mealType}</p>
                     <p className="text-dark-500 text-xs">{formatDate(e.date, 'MMM d, yyyy')}</p>

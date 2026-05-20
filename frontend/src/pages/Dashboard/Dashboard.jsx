@@ -3,13 +3,16 @@ import {
   RiRunLine, RiRestaurantLine, RiScalesLine, RiFireLine,
   RiCalendarLine, RiArrowRightLine, RiTrophyLine,
   RiArrowUpLine, RiArrowDownLine, RiSubtractLine,
+  RiInformationLine,
 } from 'react-icons/ri';
 import { Line } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { dashboardAPI } from '../../services/api';
+import { dashboardAPI, workoutAPI, nutritionAPI, progressAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../../components/UI/StatCard';
+import ExportButton from '../../components/UI/ExportButton';
+import { exportFullReportPDF } from '../../utils/exportUtils';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import { formatRelativeDate, formatDate, formatCalories, getErrorMessage } from '../../utils/helpers';
 import { defaultChartOptions, lineDataset, CHART_COLORS } from '../../utils/chartConfig';
@@ -72,6 +75,22 @@ const Dashboard = () => {
     },
   };
 
+  const handleFullExport = async () => {
+    try {
+      const [w, n, p] = await Promise.all([
+        workoutAPI.getAll({ limit: 1000 }),
+        nutritionAPI.getAll({ limit: 1000 }),
+        progressAPI.getAll({ limit: 1000 }),
+      ]);
+      exportFullReportPDF({
+        workouts:  w.data.data,
+        nutrition: n.data.data,
+        progress:  p.data.data,
+      }, user?.name);
+      toast.success('Full report downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
@@ -83,9 +102,15 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
-        <p className="page-subtitle">{formatDate(new Date(), 'EEEE, MMMM d, yyyy')} — Here's your fitness overview</p>
+      <div className="page-header flex items-start justify-between">
+        <div>
+          <h1 className="page-title">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
+          <p className="page-subtitle">{formatDate(new Date(), 'EEEE, MMMM d, yyyy')} — Here's your fitness overview</p>
+        </div>
+        <ExportButton
+          onExportPDF={handleFullExport}
+          label="Full Report"
+        />
       </div>
 
       {/* Top stats */}
@@ -292,7 +317,9 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right flex-shrink-0">
                   {workout.caloriesBurned > 0 && (
-                    <p className="text-brand-400 text-xs font-semibold">🔥 {workout.caloriesBurned} kcal</p>
+                    <p className="text-brand-400 text-xs font-semibold flex items-center gap-1">
+                      <RiFireLine className="text-xs" /> {workout.caloriesBurned} kcal
+                    </p>
                   )}
                   <p className="text-dark-400 text-xs">{formatRelativeDate(workout.date)}</p>
                 </div>
@@ -314,7 +341,7 @@ const Dashboard = () => {
       {!user?.profile?.weight && (
         <div className="card border-yellow-500/20 bg-yellow-500/5">
           <div className="flex items-start gap-3">
-            <span className="text-2xl">💡</span>
+            <RiInformationLine className="text-yellow-400 text-xl flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-white font-medium text-sm">Set your profile for accurate calorie goals</p>
               <p className="text-dark-400 text-xs mt-1">Add your weight, height, age, and fitness goal in Profile to get a personalized TDEE and macro targets.</p>

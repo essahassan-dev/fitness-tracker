@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   RiAddLine, RiSearchLine, RiEditLine, RiDeleteBinLine,
-  RiRunLine, RiFilterLine, RiTimeLine,
+  RiRunLine, RiFilterLine, RiTimeLine, RiFireLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 import { workoutAPI } from '../../services/api';
-import { formatDate, getCategoryColor, getMoodEmoji, getErrorMessage } from '../../utils/helpers';
+import { formatDate, getCategoryColor, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
 import ConfirmDialog from '../../components/UI/ConfirmDialog';
 import Badge from '../../components/UI/Badge';
 import WorkoutForm from './WorkoutForm';
+import ExportButton from '../../components/UI/ExportButton';
+import { exportWorkoutsPDF, exportWorkoutsCSV } from '../../utils/exportUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const CATEGORIES = ['all', 'strength', 'cardio', 'flexibility', 'sports', 'other'];
 
 const Workouts = () => {
+  const { user } = useAuth();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -25,6 +29,23 @@ const Workouts = () => {
   const [editWorkout, setEditWorkout] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Export all workouts (fetch without pagination limit)
+  const handleExportPDF = async () => {
+    try {
+      const res = await workoutAPI.getAll({ limit: 1000, sort: '-date' });
+      exportWorkoutsPDF(res.data.data, user?.name);
+      toast.success('PDF downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const res = await workoutAPI.getAll({ limit: 1000, sort: '-date' });
+      exportWorkoutsCSV(res.data.data);
+      toast.success('CSV downloaded!');
+    } catch { toast.error('Export failed'); }
+  };
 
   const fetchWorkouts = useCallback(async () => {
     setLoading(true);
@@ -76,9 +97,12 @@ const Workouts = () => {
           <h1 className="page-title">Workouts</h1>
           <p className="page-subtitle">Track and manage your training sessions</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
-          <RiAddLine className="text-lg" /> Log Workout
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton onExportPDF={handleExportPDF} onExportCSV={handleExportCSV} label="Export" />
+          <button onClick={() => setShowForm(true)} className="btn-primary flex-shrink-0">
+            <RiAddLine className="text-lg" /> Log Workout
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -145,12 +169,12 @@ const Workouts = () => {
                           </span>
                         )}
                         {workout.caloriesBurned > 0 && (
-                          <span className="text-brand-400 text-xs font-semibold flex items-center gap-1">
-                            🔥 {workout.caloriesBurned} kcal burned
-                          </span>
-                        )}
+                  <span className="text-brand-400 text-xs font-semibold flex items-center gap-1">
+                    <RiFireLine className="text-xs" /> {workout.caloriesBurned} kcal burned
+                  </span>
+                )}
                         {workout.mood && (
-                          <span className="text-xs">{getMoodEmoji(workout.mood)} {workout.mood}</span>
+                          <span className="text-xs bg-dark-800 text-dark-400 px-2 py-0.5 rounded-lg capitalize">{workout.mood}</span>
                         )}
                       </div>
                     </div>

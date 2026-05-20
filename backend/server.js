@@ -31,6 +31,11 @@ app.use('/api/nutrition', require('./routes/nutrition'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/recommendations', require('./routes/recommendations'));
+app.use('/api/subscription',    require('./routes/subscription'));
+app.use('/api/upgrade',         require('./routes/upgrade'));
+app.use('/api/trainer',         require('./routes/trainer'));
+app.use('/api/weekly-plan',     require('./routes/weeklyPlan'));
 
 // Health check
 app.get('/api/health', (req, res) => {

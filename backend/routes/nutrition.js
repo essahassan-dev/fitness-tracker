@@ -8,12 +8,12 @@ const {
   deleteNutrition,
   getNutritionAnalytics,
 } = require('../controllers/nutritionController');
-const { protect } = require('../middleware/auth');
+const { protect, premiumOnly } = require('../middleware/auth');
 
 router.use(protect);
 
-router.get('/daily', getDailySummary);
-router.get('/analytics', getNutritionAnalytics);
+router.get('/daily',     getDailySummary);
+router.get('/analytics', premiumOnly, getNutritionAnalytics);  // premium
 router.route('/').get(getNutrition).post(createNutrition);
 router.route('/:id').put(updateNutrition).delete(deleteNutrition);
 

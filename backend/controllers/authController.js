@@ -16,6 +16,8 @@ const userPayload = (user) => ({
   isActive: user.isActive,
   profile: user.profile,
   preferences: user.preferences,
+  subscription: user.subscription,
+  assignedTrainer: user.assignedTrainer || null,
   createdAt: user.createdAt,
 });
 
