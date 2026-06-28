@@ -14,27 +14,26 @@ const GoogleSuccess = () => {
       return;
     }
 
-    // Store token immediately
-    localStorage.setItem('fittrack_token', token);
+    // Use the SAME key as AuthContext — 'FitStack_token'
+    localStorage.setItem('FitStack_token', token);
 
-    // Fetch user with token
+    // Fetch user and store with the correct key
     fetch('http://localhost:5000/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then((data) => {
-        console.log('GoogleSuccess getMe response:', data);
         if (data.success && data.user) {
-          localStorage.setItem('fittrack_user', JSON.stringify(data.user));
+          localStorage.setItem('FitStack_user', JSON.stringify(data.user));
           window.location.replace('/dashboard');
         } else {
-          console.error('getMe failed:', data);
-          window.location.replace('/login?error=auth_failed');
+          localStorage.removeItem('FitStack_token');
+          window.location.replace('/login');
         }
       })
-      .catch((err) => {
-        console.error('fetch error:', err);
-        window.location.replace('/login?error=network');
+      .catch(() => {
+        localStorage.removeItem('FitStack_token');
+        window.location.replace('/login');
       });
   }, []);
 
