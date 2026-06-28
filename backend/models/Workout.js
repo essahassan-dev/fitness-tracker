@@ -23,6 +23,7 @@ const workoutSchema = new mongoose.Schema(
     notes:    { type: String, default: '', trim: true },
     mood:     { type: String, enum: ['great', 'good', 'okay', 'tired', 'bad', ''], default: '' },
     completed:{ type: Boolean, default: true },
+    source:   { type: String, enum: ['manual', 'weekly_plan'], default: 'manual' },
   },
   { timestamps: true }
 );

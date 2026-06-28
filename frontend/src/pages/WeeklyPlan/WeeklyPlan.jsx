@@ -3,9 +3,10 @@ import {
   RiRefreshLine, RiCheckLine, RiCalendarLine,
   RiRunLine, RiTimeLine, RiMoonLine, RiTrophyLine,
   RiInformationLine, RiArrowRightLine, RiSettings3Line,
+  RiFireLine, RiFlashlightLine, RiBuilding2Line, RiGridLine, RiHomeLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
-import { weeklyPlanAPI } from '../../services/api';
+import { weeklyPlanAPI, dashboardAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
@@ -16,21 +17,21 @@ const EQUIPMENT_OPTIONS = [
   {
     key: 'MACHINE',
     label: 'Gym Machines',
-    icon: '🏋️',
+    Icon: RiBuilding2Line,
     desc: 'Full gym access — barbells, machines, cables',
     examples: 'Bench Press, Deadlift, Leg Press',
   },
   {
     key: 'EQUIPMENT',
     label: 'Dumbbells / Bands',
-    icon: '🪀',
+    Icon: RiGridLine,
     desc: 'Dumbbells, barbells, resistance bands',
     examples: 'Dumbbell Press, Goblet Squat, Band Rows',
   },
   {
     key: 'NOTHING',
     label: 'Home / Bodyweight',
-    icon: '🏠',
+    Icon: RiHomeLine,
     desc: 'No equipment needed — anywhere, anytime',
     examples: 'Push Ups, Pull Ups, Squats, Burpees',
   },
@@ -110,6 +111,14 @@ const WeeklyPlan = () => {
     try {
       const res = await weeklyPlanAPI.toggleExercise(plan._id, dayNumber, exIdx);
       setPlan(res.data.data);
+
+      // When day auto-completes — show calories burned toast
+      if (res.data.dayCompleted && res.data.autoLoggedCalories > 0) {
+        toast.success(
+          `Day complete! 🔥 ${res.data.autoLoggedCalories} kcal burned — logged to your dashboard`,
+          { duration: 4000 }
+        );
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -135,7 +144,15 @@ const WeeklyPlan = () => {
       const res = await weeklyPlanAPI.toggleDay(plan._id, dayNumber);
       setPlan(res.data.data);
       const updatedDay = res.data.data.days.find((d) => d.dayNumber === dayNumber);
-      if (updatedDay?.completed) toast.success(`${updatedDay.dayName} completed!`);
+      if (updatedDay?.completed) {
+        const kcal = res.data.autoLoggedCalories || 0;
+        toast.success(
+          kcal > 0
+            ? `${updatedDay.dayName} complete! 🔥 ${kcal} kcal burned — logged to your dashboard`
+            : `${updatedDay.dayName} completed!`,
+          { duration: 4000 }
+        );
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -212,7 +229,7 @@ const WeeklyPlan = () => {
             <h2 className="text-white font-bold text-lg mb-2">Select Equipment Type</h2>
             <p className="text-dark-400 text-sm mb-5">Your weekly plan exercises will match your available equipment</p>
             <div className="space-y-3">
-              {EQUIPMENT_OPTIONS.map(({ key, label, icon, desc, examples }) => (
+              {EQUIPMENT_OPTIONS.map(({ key, label, Icon, desc, examples }) => (
                 <button
                   key={key}
                   onClick={() => handleRegenerate(key)}
@@ -222,7 +239,9 @@ const WeeklyPlan = () => {
                       : 'bg-dark-800/50 border-dark-700'
                   }`}
                 >
-                  <span className="text-2xl flex-shrink-0">{icon}</span>
+                  <div className="w-9 h-9 bg-brand-500/10 border border-brand-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon className="text-brand-400 text-lg" />
+                  </div>
                   <div className="flex-1">
                     <p className="text-white font-semibold text-sm">{label}</p>
                     <p className="text-dark-400 text-xs mt-0.5">{desc}</p>
@@ -349,7 +368,7 @@ const WeeklyPlan = () => {
                   activeDay_.completed
                     ? 'bg-dark-800 text-dark-400 hover:text-white'
                     : activeDay_.exercises.every((e) => e.completed)
-                    ? 'bg-brand-500 hover:bg-brand-600 text-white'
+                    ? 'bg-brand-500 hover:bg-brand-500 text-white'
                     : 'bg-dark-800 text-dark-500 cursor-not-allowed'
                 }`}
               >

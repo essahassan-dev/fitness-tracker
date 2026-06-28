@@ -59,7 +59,9 @@ const AdminUsers = () => {
   };
 
   const handleToggleRole = async (user) => {
-    const newRole = user.role === 'admin' ? 'user' : 'admin';
+    // Cycle: user → trainer → admin → user
+    const roleMap = { user: 'trainer', trainer: 'admin', admin: 'user' };
+    const newRole = roleMap[user.role] || 'user';
     setActionLoading(user._id);
     try {
       await adminAPI.updateRole(user._id, newRole);
@@ -116,6 +118,7 @@ const AdminUsers = () => {
             <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }} className="select pl-10 w-full sm:w-36">
               <option value="all">All Roles</option>
               <option value="user">User</option>
+              <option value="trainer">Trainer</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -171,8 +174,14 @@ const AdminUsers = () => {
                     {/* Role / Status */}
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium w-fit ${user.role === 'admin' ? 'bg-red-500/10 text-red-400' : 'bg-dark-700 text-dark-300'}`}>
-                          {user.role === 'admin' ? '🛡 Admin' : '👤 User'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium w-fit ${
+                          user.role === 'admin'   ? 'bg-red-500/10 text-red-400' :
+                          user.role === 'trainer' ? 'bg-blue-500/10 text-blue-400' :
+                          'bg-dark-700 text-dark-300'
+                        }`}>
+                          {user.role === 'admin'   ? '🛡 Admin' :
+                           user.role === 'trainer' ? '🏋️ Trainer' :
+                           '👤 User'}
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium w-fit ${user.isActive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
                           {user.isActive ? '● Active' : '● Banned'}
@@ -221,7 +230,11 @@ const AdminUsers = () => {
                         <button
                           onClick={() => handleToggleRole(user)}
                           disabled={actionLoading === user._id}
-                          title={user.role === 'admin' ? 'Demote to user' : 'Promote to admin'}
+                          title={
+                            user.role === 'user'    ? 'Promote to Trainer' :
+                            user.role === 'trainer' ? 'Promote to Admin' :
+                            'Demote to User'
+                          }
                           className="p-2 text-dark-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors disabled:opacity-40"
                         >
                           <RiShieldLine />
@@ -284,7 +297,13 @@ const AdminUsers = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 items-end">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${user.role === 'admin' ? 'bg-red-500/10 text-red-400' : 'bg-dark-700 text-dark-300'}`}>{user.role}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      user.role === 'admin'   ? 'bg-red-500/10 text-red-400' :
+                      user.role === 'trainer' ? 'bg-blue-500/10 text-blue-400' :
+                      'bg-dark-700 text-dark-300'
+                    }`}>
+                      {user.role === 'trainer' ? '🏋️ Trainer' : user.role}
+                    </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${user.isActive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>{user.isActive ? 'Active' : 'Banned'}</span>
                   </div>
                 </div>

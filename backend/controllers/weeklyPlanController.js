@@ -1,6 +1,53 @@
 const WeeklyPlan = require('../models/WeeklyPlan');
 const User       = require('../models/User');
+const Workout    = require('../models/Workout');
 const { generateWeeklyPlan } = require('../utils/weeklyPlanGenerator');
+const { calcWorkoutCalories } = require('../utils/calorieCalc');
+
+// ── Auto-log a workout when a weekly plan day is completed ────────────────────
+const autoLogWorkout = async (userId, day, plan) => {
+  try {
+    const user = await User.findById(userId).select('profile');
+    const bodyWeight = user?.profile?.weight || 70;
+
+    // Build exercise list from completed exercises
+    const exercises = day.exercises
+      .filter((ex) => ex.completed)
+      .map((ex) => ({
+        name:     ex.name,
+        category: ex.category || 'strength',
+        sets:     ex.sets     || null,
+        reps:     ex.reps ? parseInt(ex.reps) || null : null,
+        duration: ex.duration || null,
+        notes:    'Auto-logged from weekly plan',
+        caloriesBurned: 0,
+      }));
+
+    const workoutData = {
+      user:     userId,
+      title:    `${day.dayName} — ${day.focus}`,
+      date:     new Date(),
+      exercises,
+      notes:    `Auto-logged from weekly plan (${plan.equipmentType || 'MACHINE'})`,
+      completed: true,
+      source:   'weekly_plan',
+    };
+
+    // Calculate calories
+    const caloriesBurned = calcWorkoutCalories(workoutData, bodyWeight);
+    workoutData.caloriesBurned = caloriesBurned;
+    workoutData.exercises = workoutData.exercises.map((ex) => ({
+      ...ex,
+      caloriesBurned: Math.round(caloriesBurned / exercises.length),
+    }));
+
+    await Workout.create(workoutData);
+    return caloriesBurned; // return for response
+  } catch (err) {
+    console.error('Auto-log workout error:', err.message);
+    return 0;
+  }
+};
 
 // ── Get current week plan ─────────────────────────────────────────────────────
 const getCurrentPlan = async (req, res, next) => {
@@ -53,13 +100,23 @@ const toggleExercise = async (req, res, next) => {
     exercise.completed   = !exercise.completed;
     exercise.completedAt = exercise.completed ? new Date() : null;
 
+    // Check if ALL exercises are now done
     const allDone = day.exercises.every((e) => e.completed);
+    const wasDone = day.completed;
+
     day.completed   = allDone;
     day.completedAt = allDone ? new Date() : null;
 
     plan.markModified('days');
     await plan.save();
-    res.json({ success: true, data: plan });
+
+    // Auto-log workout when day completes for the first time
+    let autoLoggedCalories = 0;
+    if (allDone && !wasDone) {
+      autoLoggedCalories = await autoLogWorkout(req.user._id, day, plan);
+    }
+
+    res.json({ success: true, data: plan, autoLoggedCalories, dayCompleted: allDone && !wasDone });
   } catch (err) { next(err); }
 };
 
@@ -73,7 +130,6 @@ const toggleDay = async (req, res, next) => {
     const day = plan.days.find((d) => d.dayNumber === Number(dayNumber));
     if (!day) return res.status(404).json({ success: false, message: 'Day not found' });
 
-    // If marking complete — check all exercises are done first
     if (!day.completed && day.exercises.length > 0) {
       const allDone = day.exercises.every((e) => e.completed);
       if (!allDone) {
@@ -84,10 +140,10 @@ const toggleDay = async (req, res, next) => {
       }
     }
 
+    const wasDone = day.completed;
     day.completed   = !day.completed;
     day.completedAt = day.completed ? new Date() : null;
 
-    // If unmarking — also unmark all exercises
     if (!day.completed) {
       day.exercises.forEach((ex) => {
         ex.completed   = false;
@@ -97,7 +153,14 @@ const toggleDay = async (req, res, next) => {
 
     plan.markModified('days');
     await plan.save();
-    res.json({ success: true, data: plan });
+
+    // Auto-log workout when day marked complete
+    let autoLoggedCalories = 0;
+    if (day.completed && !wasDone) {
+      autoLoggedCalories = await autoLogWorkout(req.user._id, day, plan);
+    }
+
+    res.json({ success: true, data: plan, autoLoggedCalories, dayCompleted: day.completed && !wasDone });
   } catch (err) { next(err); }
 };
 

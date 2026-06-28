@@ -10,6 +10,7 @@ import LoadingSpinner from './components/UI/LoadingSpinner';
 // App pages
 import Login           from './pages/Auth/Login';
 import Register        from './pages/Auth/Register';
+import GoogleSuccess   from './pages/Auth/GoogleSuccess';
 import Dashboard       from './pages/Dashboard/Dashboard';
 import Workouts        from './pages/Workouts/Workouts';
 import Nutrition       from './pages/Nutrition/Nutrition';
@@ -17,6 +18,7 @@ import Progress        from './pages/Progress/Progress';
 import Analytics       from './pages/Analytics/Analytics';
 import Profile         from './pages/Profile/Profile';
 import Recommendations from './pages/Recommendations/Recommendations';
+import Attendance      from './pages/Attendance/Attendance';
 import WeeklyPlan      from './pages/WeeklyPlan/WeeklyPlan';
 import Pricing         from './pages/Subscription/Pricing';
 import HowToUse        from './pages/HowToUse/HowToUse';
@@ -27,11 +29,13 @@ import AdminUsers       from './pages/Admin/AdminUsers';
 import AdminUserProfile from './pages/Admin/AdminUserProfile';
 import AdminTrainers    from './pages/Admin/AdminTrainers';
 import AdminUpgradeRequests from './pages/Admin/AdminUpgradeRequests';
+import AdminAttendance  from './pages/Admin/AdminAttendance';
 
 // Trainer pages
 import TrainerLayout       from './pages/Trainer/TrainerLayout';
 import TrainerClients      from './pages/Trainer/TrainerClients';
 import TrainerClientDetail from './pages/Trainer/TrainerClientDetail';
+import TrainerAttendance   from './pages/Trainer/TrainerAttendance';
 
 // ── Route guards ───────────────────────────────────────────────────────────────
 
@@ -70,9 +74,10 @@ const TrainerRoute = ({ children }) => {
 const AppRoutes = () => (
   <Routes>
     {/* Public */}
-    <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
-    <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-    <Route path="/pricing"  element={<Pricing />} />
+    <Route path="/login"              element={<PublicRoute><Login /></PublicRoute>} />
+    <Route path="/register"           element={<PublicRoute><Register /></PublicRoute>} />
+    <Route path="/pricing"            element={<Pricing />} />
+    <Route path="/auth/google/success" element={<GoogleSuccess />} />
 
     {/* App — protected */}
     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -84,6 +89,7 @@ const AppRoutes = () => (
       <Route path="analytics"       element={<Analytics />} />
       <Route path="recommendations" element={<Recommendations />} />
       <Route path="weekly-plan"     element={<WeeklyPlan />} />
+      <Route path="attendance"      element={<Attendance />} />
       <Route path="how-to-use"      element={<HowToUse />} />
       <Route path="profile"         element={<Profile />} />
     </Route>
@@ -95,12 +101,14 @@ const AppRoutes = () => (
       <Route path="users/:id"   element={<AdminUserProfile />} />
       <Route path="trainers"    element={<AdminTrainers />} />
       <Route path="upgrades"    element={<AdminUpgradeRequests />} />
+      <Route path="attendance"  element={<AdminAttendance />} />
     </Route>
 
     {/* Trainer */}
     <Route path="/trainer" element={<TrainerRoute><TrainerLayout /></TrainerRoute>}>
       <Route index                    element={<TrainerClients />} />
       <Route path="client/:userId"    element={<TrainerClientDetail />} />
+      <Route path="attendance"        element={<TrainerAttendance />} />
     </Route>
 
     {/* Fallback */}
@@ -111,7 +119,7 @@ const AppRoutes = () => (
 // ── App ────────────────────────────────────────────────────────────────────────
 
 const App = () => (
-  <BrowserRouter>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <ThemeProvider>
       <AuthProvider>
         <AppRoutes />
@@ -127,7 +135,7 @@ const App = () => (
               fontSize: '14px',
               fontFamily: 'Inter, sans-serif',
             },
-            success: { iconTheme: { primary: '#22c55e', secondary: '#0f172a' } },
+            success: { iconTheme: { primary: '#3b82f6', secondary: '#0f172a' } },
             error:   { iconTheme: { primary: '#ef4444', secondary: '#0f172a' } },
           }}
         />

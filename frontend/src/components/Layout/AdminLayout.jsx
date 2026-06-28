@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   RiDashboardLine, RiGroupLine, RiShieldLine,
   RiArrowLeftLine, RiMenuLine, RiCloseLine,
-  RiUserHeartLine, RiVipCrownLine,
+  RiUserHeartLine, RiVipCrownLine, RiQrCodeLine,
 } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
@@ -11,8 +11,9 @@ import { getInitials } from '../../utils/helpers';
 const adminNav = [
   { to: '/admin',           icon: RiDashboardLine,  label: 'Overview',           end: true },
   { to: '/admin/users',     icon: RiGroupLine,      label: 'User Management' },
-  { to: '/admin/trainers',  icon: RiUserHeartLine, RiVipCrownLine,  label: 'Trainer Management' },
+  { to: '/admin/trainers',  icon: RiUserHeartLine, RiVipCrownLine, RiQrCodeLine,  label: 'Trainer Management' },
   { to: '/admin/upgrades',  icon: RiVipCrownLine,   label: 'Upgrade Requests' },
+  { to: '/admin/attendance', icon: RiQrCodeLine,     label: 'Attendance' },
 ];
 
 const AdminLayout = () => {

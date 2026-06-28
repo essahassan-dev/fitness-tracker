@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   RiGroupLine, RiDashboardLine, RiArrowLeftLine,
-  RiMenuLine, RiCloseLine, RiUserHeartLine, RiFlashlightLine,
+  RiMenuLine, RiCloseLine, RiUserHeartLine, RiFlashlightLine, RiQrCodeLine,
 } from 'react-icons/ri';
+
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
 
 const trainerNav = [
-  { to: '/trainer',       icon: RiDashboardLine,  label: 'My Clients',  end: true },
+  { to: '/trainer',            icon: RiDashboardLine, label: 'My Clients', end: true },
+  { to: '/trainer/attendance', icon: RiQrCodeLine,    label: 'Attendance' },
 ];
 
 const TrainerLayout = () => {

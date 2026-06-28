@@ -5,7 +5,7 @@ import {
   RiSunFoggyLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
-import { nutritionAPI } from '../../services/api';
+import { nutritionAPI, dailyDietAPI } from '../../services/api';
 import { formatDate, getMealTypeColor, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
@@ -14,6 +14,7 @@ import NutritionForm from './NutritionForm';
 import ExportButton from '../../components/UI/ExportButton';
 import { exportNutritionPDF, exportNutritionCSV } from '../../utils/exportUtils';
 import { useAuth } from '../../context/AuthContext';
+import DailyDietTracker from '../../components/UI/DailyDietTracker';
 
 const MEAL_TYPES = ['all', 'breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -38,6 +39,14 @@ const Nutrition = () => {
   const [editEntry, setEditEntry] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [todayDietPlan, setTodayDietPlan] = useState(null);
+
+  // Check if user has an active diet plan for today
+  useEffect(() => {
+    dailyDietAPI.getToday()
+      .then((res) => setTodayDietPlan(res.data.data))
+      .catch(() => {});
+  }, []);
 
   const handleExportPDF = async () => {
     try {
@@ -161,6 +170,23 @@ const Nutrition = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Today's Diet Plan Tracker */}
+      {todayDietPlan && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-white font-semibold">Today's Diet Plan</h2>
+              <p className="text-dark-400 text-xs mt-0.5">{todayDietPlan.planName} — tick meals as you complete them</p>
+            </div>
+          </div>
+          <DailyDietTracker
+            dietPlanId={todayDietPlan.dietPlanId}
+            planName={todayDietPlan.planName}
+            onComplete={fetchData}
+          />
         </div>
       )}
 

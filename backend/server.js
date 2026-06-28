@@ -1,24 +1,24 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
+const passport = require('./config/passport');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
-dotenv.config();
-
-// Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -36,6 +36,8 @@ app.use('/api/subscription',    require('./routes/subscription'));
 app.use('/api/upgrade',         require('./routes/upgrade'));
 app.use('/api/trainer',         require('./routes/trainer'));
 app.use('/api/weekly-plan',     require('./routes/weeklyPlan'));
+app.use('/api/daily-diet',      require('./routes/dailyDiet'));
+app.use('/api/attendance',      require('./routes/attendance'));
 
 // Health check
 app.get('/api/health', (req, res) => {

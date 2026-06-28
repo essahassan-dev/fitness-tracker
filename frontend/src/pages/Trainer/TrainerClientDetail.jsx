@@ -194,15 +194,26 @@ const TrainerClientDetail = () => {
             <div className="space-y-3">
               {recentWorkouts.map((w) => (
                 <div key={w._id} className="flex items-center gap-4 p-3 rounded-xl bg-dark-800/50">
-                  <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <RiRunLine className="text-orange-400" />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    w.source === 'weekly_plan'
+                      ? 'bg-brand-500/10 border border-brand-500/20'
+                      : 'bg-orange-500/10 border border-orange-500/20'
+                  }`}>
+                    <RiRunLine className={w.source === 'weekly_plan' ? 'text-brand-400' : 'text-orange-400'} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{w.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white font-medium text-sm truncate">{w.title}</p>
+                      {w.source === 'weekly_plan' && (
+                        <span className="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full flex-shrink-0">
+                          Weekly Plan
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3 text-xs text-dark-500 mt-0.5">
                       <span>{w.exercises?.length || 0} exercises</span>
                       {w.duration && <span className="flex items-center gap-1"><RiTimeLine />{w.duration} min</span>}
-                      {w.caloriesBurned > 0 && <span className="text-brand-400">🔥 {w.caloriesBurned} kcal</span>}
+                      {w.caloriesBurned > 0 && <span className="text-orange-400">{w.caloriesBurned} kcal burned</span>}
                     </div>
                   </div>
                   <p className="text-dark-500 text-xs flex-shrink-0">{formatDate(w.date)}</p>

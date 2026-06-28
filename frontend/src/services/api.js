@@ -90,6 +90,24 @@ export const trainerAPI = {
   deleteTrainer:    (id)             => api.delete(`/trainer/${id}`),
 };
 
+// Attendance
+export const attendanceAPI = {
+  generateQR:       ()           => api.get('/attendance/qr'),
+  scan:             (qrToken)    => api.post('/attendance/scan', { qrToken }),
+  getMy:            (params)     => api.get('/attendance/my', { params }),
+  getAll:           (params)     => api.get('/attendance', { params }),
+  getTrainer:       (params)     => api.get('/attendance/trainer', { params }),
+  manualMark:       (data)       => api.post('/attendance/manual', data),
+  delete:           (id)         => api.delete(`/attendance/${id}`),
+};
+
+// Daily Diet Plan
+export const dailyDietAPI = {
+  getToday:    ()               => api.get('/daily-diet/today'),
+  start:       (dietPlanId)     => api.post('/daily-diet/start', { dietPlanId }),
+  toggleMeal:  (planId, idx)    => api.patch(`/daily-diet/${planId}/meal/${idx}/toggle`),
+};
+
 // Weekly Plan
 export const weeklyPlanAPI = {
   getCurrent:       (params)         => api.get('/weekly-plan/current', { params }),

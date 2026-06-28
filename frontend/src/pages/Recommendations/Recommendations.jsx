@@ -3,6 +3,8 @@ import {
   RiFlashlightLine, RiRunLine, RiRestaurantLine, RiRefreshLine,
   RiCheckLine, RiTimeLine, RiFireLine,
   RiInformationLine, RiArrowRightLine, RiCalendarLine,
+  RiBuilding2Line, RiGridLine, RiHomeLine, RiLightbulbLine,
+  RiSunFoggyLine, RiSunLine, RiMoonLine, RiAppleLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 import { recommendationAPI } from '../../services/api';
@@ -10,13 +12,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import PremiumGate from '../../components/UI/PremiumGate';
+import DailyDietTracker from '../../components/UI/DailyDietTracker';
 import { getErrorMessage } from '../../utils/helpers';
 
 // ── Equipment selector ─────────────────────────────────────────────────────────
 const EQUIPMENT_OPTIONS = [
-  { key: 'MACHINE',   label: 'Machine',    icon: '🏋️', desc: 'Gym machines (chest press, leg press, cables)' },
-  { key: 'EQUIPMENT', label: 'Equipment',  icon: '🪀', desc: 'Dumbbells, barbells, resistance bands' },
-  { key: 'NOTHING',   label: 'Home / Bodyweight', icon: '🏠', desc: 'No equipment needed' },
+  { key: 'MACHINE',   label: 'Machine',          Icon: RiBuilding2Line, desc: 'Gym machines (chest press, leg press, cables)' },
+  { key: 'EQUIPMENT', label: 'Equipment',         Icon: RiGridLine,      desc: 'Dumbbells, barbells, resistance bands' },
+  { key: 'NOTHING',   label: 'Home / Bodyweight', Icon: RiHomeLine,      desc: 'No equipment needed' },
 ];
 
 // ── Exercise card ──────────────────────────────────────────────────────────────
@@ -35,7 +38,7 @@ const ExerciseCard = ({ exercise }) => (
     <p className="text-dark-400 text-xs mb-3">{exercise.description}</p>
     <div className="flex flex-wrap gap-2 mb-3">
       <span className="text-xs bg-dark-700 text-dark-300 px-2 py-0.5 rounded-lg capitalize">{exercise.muscleGroup}</span>
-      <span className="text-xs bg-dark-700 text-dark-300 px-2 py-0.5 rounded-lg">{exercise.sets} sets × {exercise.reps}</span>
+      <span className="text-xs bg-dark-700 text-dark-300 px-2 py-0.5 rounded-lg">{exercise.sets} sets x {exercise.reps}</span>
       {exercise.restSeconds > 0 && (
         <span className="text-xs bg-dark-700 text-dark-300 px-2 py-0.5 rounded-lg">{exercise.restSeconds}s rest</span>
       )}
@@ -53,8 +56,8 @@ const ExerciseCard = ({ exercise }) => (
     {exercise.tips?.length > 0 && (
       <div className="mt-2 pt-2 border-t border-dark-700">
         {exercise.tips.map((tip, i) => (
-          <p key={i} className="text-yellow-500/70 text-xs flex gap-1.5">
-            <span>💡</span>{tip}
+          <p key={i} className="text-yellow-500/70 text-xs flex items-start gap-1.5">
+            <RiLightbulbLine className="flex-shrink-0 mt-0.5" />{tip}
           </p>
         ))}
       </div>
@@ -106,13 +109,13 @@ const WorkoutCard = ({ plan, onStartPlan }) => (
 );
 
 // ── Diet plan card ─────────────────────────────────────────────────────────────
-const DietCard = ({ plan }) => {
+const DietCard = ({ plan, onDietComplete }) => {
   const [expanded, setExpanded] = useState(false);
   const meals = [
-    { key: 'breakfast', label: '🌅 Breakfast', icon: '🌅' },
-    { key: 'lunch',     label: '☀️ Lunch',     icon: '☀️' },
-    { key: 'dinner',    label: '🌙 Dinner',    icon: '🌙' },
-    { key: 'snacks',    label: '🍎 Snacks',    icon: '🍎' },
+    { key: 'breakfast', label: 'Breakfast', MealIcon: RiSunFoggyLine },
+    { key: 'lunch',     label: 'Lunch',     MealIcon: RiSunLine },
+    { key: 'dinner',    label: 'Dinner',    MealIcon: RiMoonLine },
+    { key: 'snacks',    label: 'Snacks',    MealIcon: RiAppleLine },
   ];
 
   return (
@@ -152,13 +155,15 @@ const DietCard = ({ plan }) => {
       {/* Expanded meals */}
       {expanded && (
         <div className="space-y-3 pt-3 border-t border-dark-800">
-          {meals.map(({ key, label }) => {
+          {meals.map(({ key, label, MealIcon }) => {
             const meal = plan[key];
             if (!meal) return null;
             return (
               <div key={key} className="bg-dark-800/50 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-white font-medium text-sm">{label} — {meal.name}</p>
+                  <p className="text-white font-medium text-sm flex items-center gap-1.5">
+                    <MealIcon className="text-brand-400" /> {label} — {meal.name}
+                  </p>
                   <span className="text-orange-400 text-xs font-semibold">{meal.calories} kcal</span>
                 </div>
                 <div className="flex gap-3 text-xs text-dark-400 mb-2">
@@ -178,6 +183,13 @@ const DietCard = ({ plan }) => {
           })}
         </div>
       )}
+
+      {/* Daily meal tracker */}
+      <DailyDietTracker
+        dietPlanId={plan._id}
+        planName={plan.name}
+        onComplete={onDietComplete}
+      />
     </div>
   );
 };
@@ -196,6 +208,11 @@ const Recommendations = () => {
   // Navigate to weekly plan with the selected equipment type
   const handleStartPlan = (equipmentType) => {
     navigate('/weekly-plan', { state: { equipmentType } });
+  };
+
+  // When all meals complete — dashboard will auto-refresh on next visit
+  const handleDietComplete = () => {
+    toast('All meals logged! Go to Dashboard to see updated calories.', { icon: null, duration: 3000 });
   };
 
   const hasProfile = user?.profile?.weight && user?.profile?.height && user?.profile?.goal;
@@ -326,7 +343,7 @@ const Recommendations = () => {
           <div>
             <p className="text-white font-semibold mb-3">Select Equipment Type</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {EQUIPMENT_OPTIONS.map(({ key, label, icon, desc }) => (
+              {EQUIPMENT_OPTIONS.map(({ key, label, Icon, desc }) => (
                 <button
                   key={key}
                   onClick={() => handleEquipmentSelect(key)}
@@ -337,13 +354,15 @@ const Recommendations = () => {
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl">{icon}</span>
+                    <Icon className="text-xl text-brand-400 flex-shrink-0" />
                     <span className="font-semibold text-sm">{label}</span>
                     {selectedEquipment === key && <RiCheckLine className="text-brand-400 ml-auto" />}
                   </div>
                   <p className="text-xs text-dark-500">{desc}</p>
                   {data?.equipmentSuggestion === key && (
-                    <span className="text-xs text-brand-400 mt-1 block">⭐ Recommended for you</span>
+                    <span className="text-xs text-brand-400 mt-1 flex items-center gap-1">
+                      <RiCheckLine className="text-xs" /> Recommended for you
+                    </span>
                   )}
                 </button>
               ))}
@@ -372,7 +391,7 @@ const Recommendations = () => {
         <PremiumGate feature="Diet Plans">
         <div className="space-y-4">
           {data?.dietPlans?.length > 0 ? (
-            data.dietPlans.map((plan) => <DietCard key={plan._id} plan={plan} />)
+            data.dietPlans.map((plan) => <DietCard key={plan._id} plan={plan} onDietComplete={handleDietComplete} />)
           ) : (
             <div className="card text-center py-12">
               <RiRestaurantLine className="text-4xl text-dark-700 mx-auto mb-2" />

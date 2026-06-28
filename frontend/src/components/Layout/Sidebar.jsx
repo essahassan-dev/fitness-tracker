@@ -4,7 +4,7 @@ import {
   RiDashboardLine, RiRunLine, RiRestaurantLine, RiLineChartLine,
   RiBarChartLine, RiUserLine, RiLogoutBoxLine, RiMenuLine, RiCloseLine,
   RiFlashlightLine, RiShieldLine, RiLightbulbLine, RiVipCrownLine,
-  RiCalendarLine, RiUserHeartLine, RiQuestionLine,
+  RiCalendarLine, RiUserHeartLine, RiQuestionLine, RiQrCodeLine,
 } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
@@ -20,6 +20,7 @@ const navItems = [
   { to: '/recommendations', icon: RiLightbulbLine,   label: 'Recommendations' },
   { to: '/weekly-plan',     icon: RiCalendarLine,    label: 'Weekly Plan' },
   { to: '/profile',         icon: RiUserLine,        label: 'Profile' },
+  { to: '/attendance',     icon: RiQrCodeLine,     label: 'Attendance' },
   { to: '/how-to-use',      icon: RiQuestionLine,    label: 'How to Use' },
 ];
 

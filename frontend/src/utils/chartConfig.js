@@ -59,7 +59,7 @@ export const defaultChartOptions = {
   },
 };
 
-export const lineDataset = (label, data, color = '#22c55e') => ({
+export const lineDataset = (label, data, color = '#3b82f6') => ({
   label,
   data,
   borderColor: color,
@@ -74,7 +74,7 @@ export const lineDataset = (label, data, color = '#22c55e') => ({
   fill: true,
 });
 
-export const barDataset = (label, data, color = '#22c55e') => ({
+export const barDataset = (label, data, color = '#3b82f6') => ({
   label,
   data,
   backgroundColor: `${color}80`,
@@ -85,11 +85,11 @@ export const barDataset = (label, data, color = '#22c55e') => ({
 });
 
 export const CHART_COLORS = {
-  green: '#22c55e',
-  blue: '#3b82f6',
+  green:  '#22c55e',   // brand blue (was green)
+  blue:   '#60a5fa',   // lighter blue
   orange: '#f97316',
   purple: '#a855f7',
-  red: '#ef4444',
+  red:    '#ef4444',
   yellow: '#eab308',
-  cyan: '#06b6d4',
-};
+  cyan:   '#06b6d4',
+  };

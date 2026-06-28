@@ -1,4 +1,4 @@
-# FitStack — Full-Stack MERN Fitness Tracker
+# MERN Fitness Tracker — Full-Stack MERN Fitness Tracker
 
 A production-level fitness tracking web app built with React, Node.js, Express, and MongoDB.
 
@@ -29,7 +29,7 @@ A production-level fitness tracking web app built with React, Node.js, Express, 
 ## Project Structure
 
 ```
-FitStack/
+MERN Fitness Tracker/
 ├── backend/
 │   ├── config/         # DB connection
 │   ├── controllers/    # Route handlers

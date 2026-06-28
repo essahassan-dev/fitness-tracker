@@ -227,7 +227,7 @@ const getUserProgress = async (req, res, next) => {
 const updateUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
-    if (!['user', 'admin'].includes(role)) return res.status(400).json({ success: false, message: 'Invalid role' });
+    if (!['user', 'admin', 'trainer'].includes(role)) return res.status(400).json({ success: false, message: 'Invalid role' });
     if (req.params.id === req.user._id.toString()) return res.status(400).json({ success: false, message: 'Cannot change your own role' });
 
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');

@@ -33,6 +33,8 @@ const nutritionSchema = new mongoose.Schema(
     },
     foods: [foodItemSchema],
     notes: { type: String, default: '', trim: true },
+    source: { type: String, enum: ['manual', 'diet_plan'], default: 'manual' },
+    meta: { planId: { type: String, default: '' }, mealIndex: { type: Number, default: null } },
     // Computed totals (denormalized for performance)
     totalCalories: { type: Number, default: 0 },
     totalProtein: { type: Number, default: 0 },

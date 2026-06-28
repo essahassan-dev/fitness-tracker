@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   RiRunLine, RiRestaurantLine, RiScalesLine, RiFireLine,
   RiCalendarLine, RiArrowRightLine, RiTrophyLine,
@@ -6,7 +6,7 @@ import {
   RiInformationLine,
 } from 'react-icons/ri';
 import { Line } from 'react-chartjs-2';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { dashboardAPI, workoutAPI, nutritionAPI, progressAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -27,17 +27,24 @@ const NetBadge = ({ net }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [chartMode, setChartMode] = useState('balance'); // 'balance' | 'consumed' | 'burned'
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const [data, setData]         = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [chartMode, setChartMode] = useState('balance');
 
-  useEffect(() => {
-    dashboardAPI.getSummary()
+  const fetchDashboard = useCallback(() => {
+    setLoading(true);
+    return dashboardAPI.getSummary()
       .then((res) => setData(res.data.data))
       .catch((err) => toast.error(getErrorMessage(err)))
       .finally(() => setLoading(false));
   }, []);
+
+  // Re-fetch every time user navigates to dashboard (catches weekly plan updates)
+  useEffect(() => {
+    fetchDashboard();
+  }, [location.pathname]);
 
   if (loading) return <PageLoader />;
 
