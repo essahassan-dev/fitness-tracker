@@ -38,6 +38,8 @@ app.use('/api/trainer',         require('./routes/trainer'));
 app.use('/api/weekly-plan',     require('./routes/weeklyPlan'));
 app.use('/api/daily-diet',      require('./routes/dailyDiet'));
 app.use('/api/attendance',      require('./routes/attendance'));
+app.use('/api/ai',              require('./routes/ai'));
+app.use('/api/notifications',   require('./routes/notifications'));
 
 // Health check
 app.get('/api/health', (req, res) => {

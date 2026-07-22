@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 
 // Wraps any content — blurs it and shows upgrade CTA if not premium
 const PremiumGate = ({ children, feature = 'This feature', compact = false }) => {
-  const { isPremium } = useAuth();
+  const { isPremium, user } = useAuth();
   const navigate = useNavigate();
 
-  if (isPremium()) return children;
+  // Admins have full access — never show premium gate
+  if (isPremium() || user?.role === 'admin') return children;
 
   if (compact) {
     return (

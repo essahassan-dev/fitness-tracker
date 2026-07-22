@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { sendWelcomeLogin } = require('../utils/emailService');
+const { notifyLogin } = require('../utils/notificationService');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -69,6 +71,10 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
+
+    // Send welcome email + in-app notification (non-blocking)
+    sendWelcomeLogin(user).catch(() => {});
+    notifyLogin(user._id, user.name).catch(() => {});
 
     res.json({
       success: true,

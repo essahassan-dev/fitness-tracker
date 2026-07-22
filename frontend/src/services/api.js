@@ -90,6 +90,14 @@ export const trainerAPI = {
   deleteTrainer:    (id)             => api.delete(`/trainer/${id}`),
 };
 
+// Notifications
+export const notificationAPI = {
+  getAll:   ()    => api.get('/notifications'),
+  markRead: ()    => api.put('/notifications/read'),
+  deleteOne:(id)  => api.delete(`/notifications/${id}`),
+  clearAll: ()    => api.delete('/notifications/all'),
+};
+
 // Attendance
 export const attendanceAPI = {
   generateQR:       ()           => api.get('/attendance/qr'),

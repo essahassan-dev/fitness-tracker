@@ -58,7 +58,7 @@ const Pricing = () => {
       .catch(() => {});
   }, []);
 
-  const alreadyPremium = isPremium();
+  const alreadyPremium = isPremium() || user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-dark-950 py-12 px-4">

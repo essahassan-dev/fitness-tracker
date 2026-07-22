@@ -27,6 +27,9 @@ export const SubscriptionCard = () => {
   const sub = user?.subscription;
   const premium = isPremium();
 
+  // Admin sees nothing — they have full access
+  if (user?.role === 'admin') return null;
+
   const endDate = sub?.endDate ? new Date(sub.endDate) : null;
   const daysLeft = endDate
     ? Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)))

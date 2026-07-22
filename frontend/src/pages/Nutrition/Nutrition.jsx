@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   RiAddLine, RiEditLine, RiDeleteBinLine, RiRestaurantLine,
   RiCalendarLine, RiFireLine, RiSunLine, RiMoonLine, RiAppleLine,
@@ -30,6 +31,7 @@ const MealIcon = ({ type, className = 'text-lg' }) => {
 
 const Nutrition = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [entries, setEntries] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +82,7 @@ const Nutrition = () => {
     }
   }, [selectedDate, mealType]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData, location.pathname]);
 
   const handleDelete = async () => {
     setDeleteLoading(true);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   RiAddLine, RiEditLine, RiDeleteBinLine, RiScalesLine,
   RiRulerLine, RiCalendarLine,
@@ -151,6 +152,7 @@ const ProgressForm = ({ isOpen, onClose, onSuccess, entry }) => {
 
 const Progress = () => {
   const { user } = useAuth();
+  const location  = useLocation();
   const [entries, setEntries] = useState([]);
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -192,7 +194,7 @@ const Progress = () => {
     }
   }, [period]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData, location.pathname]);
 
   const handleDelete = async () => {
     setDeleteLoading(true);

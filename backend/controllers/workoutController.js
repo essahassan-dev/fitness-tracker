@@ -1,6 +1,8 @@
 const Workout = require('../models/Workout');
 const User = require('../models/User');
 const { calcWorkoutCalories, calcExerciseCalories } = require('../utils/calorieCalc');
+const { sendWorkoutComplete } = require('../utils/emailService');
+const { notifyWorkoutLogged } = require('../utils/notificationService');
 
 // Helper: get user body weight for calorie calc
 const getUserWeight = async (userId) => {
@@ -57,9 +59,15 @@ const createWorkout = async (req, res, next) => {
     const bodyWeight = await getUserWeight(req.user._id);
     const enriched   = enrichWithCalories(req.body, bodyWeight);
     const workout    = await Workout.create({ ...enriched, user: req.user._id });
+
+    // Send notification + email (non-blocking)
+    const user = await User.findById(req.user._id).select('name email');
+    notifyWorkoutLogged(req.user._id, workout.title, workout.caloriesBurned).catch(() => {});
+    sendWorkoutComplete(user, workout).catch(() => {});
+
     res.status(201).json({
       success: true,
-      message: `Workout logged! 🔥 ~${workout.caloriesBurned} kcal burned`,
+      message: `Workout logged! ~${workout.caloriesBurned} kcal burned`,
       data: workout,
     });
   } catch (error) { next(error); }
