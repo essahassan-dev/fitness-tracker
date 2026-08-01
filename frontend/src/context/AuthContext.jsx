@@ -66,6 +66,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isPremium = () => {
+    // Super admin and admin have full access
+    if (user?.role === 'super_admin' || user?.role === 'admin') return true;
     const sub = user?.subscription;
     if (!sub || sub.type !== 'PREMIUM') return false;
     if (sub.status !== 'ACTIVE') return false;

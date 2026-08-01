@@ -45,15 +45,16 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Admin-only middleware (must be used after protect)
+// Admin-only middleware
 const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    return next();
-  }
-  return res.status(403).json({
-    success: false,
-    message: 'Access denied. Admin privileges required.',
-  });
+  if (req.user.role === 'admin' || req.user.role === 'super_admin') return next();
+  return res.status(403).json({ success: false, message: 'Admin privileges required.' });
+};
+
+// Super admin only
+const superAdminOnly = (req, res, next) => {
+  if (req.user.role === 'super_admin') return next();
+  return res.status(403).json({ success: false, message: 'Super Admin access required.' });
 };
 
 // Premium-only middleware (must be used after protect)
@@ -74,4 +75,4 @@ const premiumOnly = (req, res, next) => {
   });
 };
 
-module.exports = { protect, adminOnly, premiumOnly };
+module.exports = { protect, adminOnly, superAdminOnly, premiumOnly };

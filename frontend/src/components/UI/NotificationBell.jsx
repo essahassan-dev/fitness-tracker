@@ -20,8 +20,8 @@ const NotificationBell = () => {
   const [notifications, setNotifs] = useState([]);
   const [unread, setUnread]       = useState(0);
 
-  // Skip for admin/trainer
-  if (user?.role === 'admin' || user?.role === 'trainer') return null;
+  // Skip for trainer only (admin needs to see notifications)
+  if (user?.role === 'trainer') return null;
 
   const fetchNotifs = useCallback(async () => {
     try {
@@ -77,7 +77,7 @@ const NotificationBell = () => {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-40 w-80 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="fixed right-4 top-20 z-40 w-80 bg-dark-900 border border-dark-700 rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-dark-800">
               <div className="flex items-center gap-2">

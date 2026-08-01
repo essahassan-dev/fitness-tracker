@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   RiAddLine, RiEditLine, RiDeleteBinLine, RiScalesLine,
-  RiRulerLine, RiCalendarLine,
+  RiRulerLine, RiCalendarLine, RiSparklingLine, RiRefreshLine,
 } from 'react-icons/ri';
 import { Line } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
-import { progressAPI } from '../../services/api';
+import { progressAPI, aiAPI } from '../../services/api';
 import { formatDate, getErrorMessage } from '../../utils/helpers';
 import { PageLoader } from '../../components/UI/LoadingSpinner';
 import EmptyState from '../../components/UI/EmptyState';
@@ -150,6 +150,105 @@ const ProgressForm = ({ isOpen, onClose, onSuccess, entry }) => {
   );
 };
 
+// ── AI Progress Prediction Component ──────────────────────────────────────────
+const AIPrediction = () => {
+  const [prediction, setPrediction] = useState(null);
+  const [stats, setStats]           = useState(null);
+  const [loading, setLoading]       = useState(false);
+  const [fetched, setFetched]       = useState(false);
+
+  const renderText = (text) => text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br/>');
+
+  const fetchPrediction = async () => {
+    setLoading(true);
+    try {
+      const res = await aiAPI.predictProgress();
+      setPrediction(res.data.prediction);
+      setStats(res.data.stats);
+      setFetched(true);
+    } catch (err) {
+      toast.error('Could not generate prediction');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center">
+            <RiSparklingLine className="text-purple-400 text-lg" />
+          </div>
+          <div>
+            <h2 className="text-white font-semibold">AI Progress Prediction</h2>
+            <p className="text-dark-400 text-xs mt-0.5">Based on your last 30 days activity</p>
+          </div>
+        </div>
+        <button
+          onClick={fetchPrediction}
+          disabled={loading}
+          className="btn-secondary text-sm"
+        >
+          {loading
+            ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            : <><RiSparklingLine /> {fetched ? 'Refresh' : 'Predict'}</>}
+        </button>
+      </div>
+
+      {!fetched && !loading && (
+        <div className="text-center py-8">
+          <RiSparklingLine className="text-4xl text-dark-700 mx-auto mb-3" />
+          <p className="text-dark-400 text-sm">Click "Predict" to get your personalized 30-day progress forecast</p>
+          <p className="text-dark-600 text-xs mt-1">Based on your workouts, nutrition, attendance, and goals</p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-3 py-6 justify-center">
+          <span className="w-6 h-6 border-2 border-dark-700 border-t-purple-400 rounded-full animate-spin" />
+          <span className="text-dark-400 text-sm">Analyzing your data...</span>
+        </div>
+      )}
+
+      {prediction && !loading && (
+        <div className="space-y-4">
+          {/* Stats used */}
+          {stats && (
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {[
+                { label: 'Workouts', value: stats.workoutCount },
+                { label: 'Attendance', value: stats.attendanceCount },
+                { label: 'Avg Calories', value: `${stats.avgCal} kcal` },
+                { label: 'Avg Protein', value: `${stats.avgProtein}g` },
+                { label: 'Cal Burned', value: `${stats.calBurned?.toLocaleString()} kcal` },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-dark-800/50 rounded-xl p-2.5 text-center">
+                  <p className="text-white font-semibold text-sm">{value}</p>
+                  <p className="text-dark-500 text-xs mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* AI prediction text */}
+          <div
+            className="bg-dark-800/50 border border-dark-700 rounded-xl p-4 text-sm text-dark-200 leading-relaxed space-y-2"
+            dangerouslySetInnerHTML={{ __html: renderText(prediction) }}
+          />
+
+          <p className="text-dark-600 text-xs text-center">
+            Prediction based on your data — results vary based on consistency and adherence
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Progress = () => {
   const { user } = useAuth();
   const location  = useLocation();
@@ -261,6 +360,9 @@ const Progress = () => {
           ))}
         </div>
       )}
+
+      {/* ── AI Progress Prediction ── */}
+      <AIPrediction />
 
       {/* Period selector */}
       <div className="flex items-center gap-2">

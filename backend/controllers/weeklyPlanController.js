@@ -3,6 +3,8 @@ const User       = require('../models/User');
 const Workout    = require('../models/Workout');
 const { generateWeeklyPlan } = require('../utils/weeklyPlanGenerator');
 const { calcWorkoutCalories } = require('../utils/calorieCalc');
+const gamification = require('../utils/gamification');
+const { notifyWorkoutLogged } = require('../utils/notificationService');
 
 // ── Auto-log a workout when a weekly plan day is completed ────────────────────
 const autoLogWorkout = async (userId, day, plan) => {
@@ -42,7 +44,12 @@ const autoLogWorkout = async (userId, day, plan) => {
     }));
 
     await Workout.create(workoutData);
-    return caloriesBurned; // return for response
+
+    // ── Trigger gamification (same as manual workout) ──
+    gamification.onWorkoutLogged(userId, caloriesBurned).catch(() => {});
+    notifyWorkoutLogged(userId, workoutData.title, caloriesBurned).catch(() => {});
+
+    return caloriesBurned;
   } catch (err) {
     console.error('Auto-log workout error:', err.message);
     return 0;

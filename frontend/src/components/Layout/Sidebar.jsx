@@ -5,7 +5,9 @@ import {
   RiBarChartLine, RiUserLine, RiLogoutBoxLine, RiMenuLine, RiCloseLine,
   RiFlashlightLine, RiShieldLine, RiLightbulbLine, RiVipCrownLine,
   RiCalendarLine, RiUserHeartLine, RiQuestionLine, RiQrCodeLine,
+  RiTrophyLine, RiFileTextLine,
 } from 'react-icons/ri';
+import Logo from '../UI/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
 import ThemeToggle from '../UI/ThemeToggle';
@@ -18,9 +20,11 @@ const navItems = [
   { to: '/progress',        icon: RiLineChartLine,   label: 'Progress' },
   { to: '/analytics',       icon: RiBarChartLine,    label: 'Analytics' },
   { to: '/recommendations', icon: RiLightbulbLine,   label: 'Recommendations' },
+  { to: '/gamification',    icon: RiTrophyLine,      label: 'Rewards & XP' },
   { to: '/weekly-plan',     icon: RiCalendarLine,    label: 'Weekly Plan' },
   { to: '/profile',         icon: RiUserLine,        label: 'Profile' },
-  { to: '/attendance',     icon: RiQrCodeLine,     label: 'Attendance' },
+  { to: '/attendance',      icon: RiQrCodeLine,      label: 'Attendance' },
+  { to: '/rules',           icon: RiFileTextLine,    label: 'Rules & Regs' },
   { to: '/how-to-use',      icon: RiQuestionLine,    label: 'How to Use' },
 ];
 
@@ -36,13 +40,7 @@ const Sidebar = () => {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-dark-800">
-        <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center flex-shrink-0">
-          <RiFlashlightLine className="text-white text-lg" />
-        </div>
-        <div>
-          <h1 className="text-white font-bold text-lg leading-none">FitStack</h1>
-          <p className="text-dark-500 text-xs mt-0.5">Fitness Tracker</p>
-        </div>
+        <Logo size="sm" textSize="text-lg" />
       </div>
 
       {/* Nav */}
@@ -76,13 +74,21 @@ const Sidebar = () => {
         {/* Trainer link */}
         {user?.role === 'trainer' && (
           <div className="pt-3 mt-2 border-t border-dark-800">
-            <NavLink
-              to="/trainer"
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            >
+            <NavLink to="/trainer" onClick={() => setMobileOpen(false)}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
               <RiUserHeartLine className="text-lg flex-shrink-0 text-blue-400" />
               <span className="text-blue-400">Trainer Panel</span>
+            </NavLink>
+          </div>
+        )}
+
+        {/* Super Admin link */}
+        {user?.role === 'super_admin' && (
+          <div className="pt-3 mt-2 border-t border-dark-800">
+            <NavLink to="/super-admin" onClick={() => setMobileOpen(false)}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+              <RiShieldLine className="text-lg flex-shrink-0 text-purple-400" />
+              <span className="text-purple-400">Super Admin</span>
             </NavLink>
           </div>
         )}
@@ -93,7 +99,7 @@ const Sidebar = () => {
         <ThemeToggle />
 
         {/* Upgrade CTA — only for regular free users */}
-        {!premium && user?.role !== 'admin' && user?.role !== 'trainer' && (
+        {!premium && user?.role !== 'admin' && user?.role !== 'trainer' && user?.role !== 'super_admin' && (
           <button
             onClick={() => { navigate('/pricing'); setMobileOpen(false); }}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20 transition-all text-sm font-medium"
@@ -139,9 +145,7 @@ const Sidebar = () => {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-dark-900 border-b border-dark-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-            <RiFlashlightLine className="text-white" />
-          </div>
+          <Logo size="sm" showText={false} />
           <span className="text-white font-bold">FitStack</span>
         </div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-dark-400 hover:text-white p-1">

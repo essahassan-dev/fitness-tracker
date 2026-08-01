@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
+import Logo from '../UI/Logo';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   RiDashboardLine, RiGroupLine, RiShieldLine,
   RiArrowLeftLine, RiMenuLine, RiCloseLine,
   RiUserHeartLine, RiVipCrownLine, RiQrCodeLine,
+  RiFileTextLine,
 } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
+import NotificationBell from '../UI/NotificationBell';
 
 const adminNav = [
   { to: '/admin',           icon: RiDashboardLine,  label: 'Overview',           end: true },
   { to: '/admin/users',     icon: RiGroupLine,      label: 'User Management' },
-  { to: '/admin/trainers',  icon: RiUserHeartLine, RiVipCrownLine, RiQrCodeLine,  label: 'Trainer Management' },
+  { to: '/admin/trainers',  icon: RiUserHeartLine, label: 'Trainer Management' },
   { to: '/admin/upgrades',  icon: RiVipCrownLine,   label: 'Upgrade Requests' },
   { to: '/admin/attendance', icon: RiQrCodeLine,     label: 'Attendance' },
+  { to: '/admin/attendance-requests', icon: RiQrCodeLine, label: 'Attend. Requests' },
+  { to: '/admin/fees', icon: RiVipCrownLine, label: 'Fee Management' },
+  { to: '/rules',      icon: RiFileTextLine, label: 'Rules & Regulations' },
 ];
 
 const AdminLayout = () => {
@@ -23,14 +29,10 @@ const AdminLayout = () => {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
+      {/* Logo — clean, no bell crammed here */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-dark-800">
-        <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-          <RiShieldLine className="text-white text-lg" />
-        </div>
-        <div>
-          <h1 className="text-white font-bold text-lg leading-none">Admin Panel</h1>
-          <p className="text-dark-500 text-xs mt-0.5">FitStack</p>
-        </div>
+        <Logo size="sm" textSize="text-base" />
+        <span className="text-dark-500 text-xs">Admin Panel</span>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -54,7 +56,8 @@ const AdminLayout = () => {
         </div>
       </nav>
 
-      <div className="px-3 py-4 border-t border-dark-800">
+      {/* Bottom — user info + notification bell together */}
+      <div className="px-3 py-4 border-t border-dark-800 space-y-2">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-dark-800/50">
           <div className="w-8 h-8 bg-red-500/20 border border-red-500/30 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-red-400 text-xs font-bold">{getInitials(user?.name)}</span>
@@ -63,6 +66,8 @@ const AdminLayout = () => {
             <p className="text-white text-sm font-medium truncate">{user?.name}</p>
             <p className="text-red-400 text-xs">Administrator</p>
           </div>
+          {/* Bell lives here — next to user name, feels natural */}
+          <NotificationBell />
         </div>
       </div>
     </div>
@@ -74,6 +79,7 @@ const AdminLayout = () => {
         <SidebarContent />
       </aside>
 
+      {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-dark-900 border-b border-dark-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
@@ -81,9 +87,12 @@ const AdminLayout = () => {
           </div>
           <span className="text-white font-bold">Admin Panel</span>
         </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-dark-400 hover:text-white p-1">
-          {mobileOpen ? <RiCloseLine className="text-2xl" /> : <RiMenuLine className="text-2xl" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="text-dark-400 hover:text-white p-1">
+            {mobileOpen ? <RiCloseLine className="text-2xl" /> : <RiMenuLine className="text-2xl" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (

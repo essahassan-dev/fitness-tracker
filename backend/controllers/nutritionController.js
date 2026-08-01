@@ -1,5 +1,6 @@
 const Nutrition = require('../models/Nutrition');
 const { notifyMealLogged } = require('../utils/notificationService');
+const gamification = require('../utils/gamification');
 
 // @desc    Get nutrition entries
 // @route   GET /api/nutrition
@@ -89,6 +90,7 @@ const createNutrition = async (req, res, next) => {
     const entry = await Nutrition.create({ ...req.body, user: req.user._id });
     // Non-blocking notification
     notifyMealLogged(req.user._id, entry.mealType, Math.round(entry.totalCalories)).catch(() => {});
+    gamification.onMealLogged(req.user._id, entry.totalProtein).catch(() => {});
     res.status(201).json({ success: true, message: 'Meal logged successfully', data: entry });
   } catch (error) { next(error); }
 };

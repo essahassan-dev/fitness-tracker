@@ -90,12 +90,54 @@ export const trainerAPI = {
   deleteTrainer:    (id)             => api.delete(`/trainer/${id}`),
 };
 
-// Notifications
+// Super Admin
+export const superAdminAPI = {
+  getStats:        ()           => api.get('/super-admin/stats'),
+  getAllAdmins:     (params)     => api.get('/super-admin/admins', { params }),
+  getAdminDetail:  (id)         => api.get(`/super-admin/admins/${id}`),
+  createAdmin:     (data)       => api.post('/super-admin/admins', data),
+  toggleStatus:    (id, data)   => api.put(`/super-admin/admins/${id}/status`, data),
+  deleteAdmin:     (id)         => api.delete(`/super-admin/admins/${id}`),
+  getAllUsers:      (params)     => api.get('/super-admin/users', { params }),
+  banUser:         (id, data)   => api.put(`/super-admin/users/${id}/ban`, data),
+};
+
+// Gamification
+export const gamificationAPI = {
+  getMyStats:    ()       => api.get('/gamification/me'),
+  getLeaderboard:(params) => api.get('/gamification/leaderboard', { params }),
+  getAllBadges:   ()       => api.get('/gamification/badges'),
+};
+
+// AI
+export const aiAPI = {
+  chat:            (data)  => api.post('/ai/chat', data),
+  predictProgress: ()      => api.post('/ai/predict-progress'),
+  workoutInsight:  (data)  => api.post('/ai/workout-insight', data),
+  notifyAdmin:     (data)  => api.post('/ai/notify-admin', data),
+};
 export const notificationAPI = {
   getAll:   ()    => api.get('/notifications'),
   markRead: ()    => api.put('/notifications/read'),
   deleteOne:(id)  => api.delete(`/notifications/${id}`),
   clearAll: ()    => api.delete('/notifications/all'),
+};
+
+// Attendance Requests (manual)
+export const attendanceRequestAPI = {
+  submit:    (data)  => api.post('/attendance-requests', data),
+  getMy:     ()      => api.get('/attendance-requests/my'),
+  getAll:    (params)=> api.get('/attendance-requests', { params }),
+  approve:   (id, data) => api.put(`/attendance-requests/${id}/approve`, data),
+  reject:    (id, data) => api.put(`/attendance-requests/${id}/reject`, data),
+};
+
+// Fees
+export const feeAPI = {
+  getAll:    (params)=> api.get('/fees', { params }),
+  save:      (data)  => api.post('/fees', data),
+  delete:    (id)    => api.delete(`/fees/${id}`),
+  generate:  (data)  => api.post('/fees/generate', data),
 };
 
 // Attendance
@@ -160,6 +202,18 @@ export const adminAPI = {
   updateRole:      (id, role)   => api.put(`/admin/users/${id}/role`, { role }),
   toggleStatus:    (id)         => api.put(`/admin/users/${id}/status`),
   deleteUser:      (id)         => api.delete(`/admin/users/${id}`),
+};
+
+// Violations & Rules
+export const violationAPI = {
+  getRules:           ()              => api.get('/violations/rules'),
+  getAll:             (params)        => api.get('/violations', { params }),
+  create:             (data)          => api.post('/violations', data),
+  getBlacklist:       ()              => api.get('/violations/blacklist'),
+  getUserViolations:  (userId)        => api.get(`/violations/user/${userId}`),
+  resolve:            (id, data)      => api.put(`/violations/${id}/resolve`, data),
+  dismiss:            (id)            => api.put(`/violations/${id}/dismiss`, {}),
+  report:             (data)          => api.post('/violations/report', data),
 };
 
 export default api;

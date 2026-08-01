@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
       theme: { type: String, enum: ['dark', 'light'], default: 'dark' },
       units: { type: String, enum: ['metric', 'imperial'], default: 'metric' },
     },
-    role:     { type: String, enum: ['user', 'admin', 'trainer'], default: 'user' },
+    role:     { type: String, enum: ['user', 'admin', 'trainer', 'super_admin'], default: 'user' },
     isActive: { type: Boolean, default: true },
     // Trainer: list of user IDs this trainer is assigned to
     assignedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

@@ -2,6 +2,7 @@ const Workout = require('../models/Workout');
 const User = require('../models/User');
 const { calcWorkoutCalories, calcExerciseCalories } = require('../utils/calorieCalc');
 const { sendWorkoutComplete } = require('../utils/emailService');
+const gamification = require('../utils/gamification');
 const { notifyWorkoutLogged } = require('../utils/notificationService');
 
 // Helper: get user body weight for calorie calc
@@ -64,6 +65,9 @@ const createWorkout = async (req, res, next) => {
     const user = await User.findById(req.user._id).select('name email');
     notifyWorkoutLogged(req.user._id, workout.title, workout.caloriesBurned).catch(() => {});
     sendWorkoutComplete(user, workout).catch(() => {});
+    // Gamification
+    require('../utils/gamification').onWorkoutLogged(req.user._id, workout.caloriesBurned).catch(() => {});
+    gamification.onWorkoutLogged(req.user._id, workout.caloriesBurned).catch(() => {});
 
     res.status(201).json({
       success: true,

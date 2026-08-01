@@ -16,22 +16,24 @@ const TYPE_CONFIG = {
 
 const TrainerRemarks = () => {
   const { user } = useAuth();
+  const { isPremium } = useAuth();
   const [open, setOpen] = useState(false);
   const [remarks, setRemarks] = useState([]);
   const [unread, setUnread] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  // Only show for regular users (not admin, not trainer)
   const isRegularUser = user?.role === 'user';
+  const premium = isPremium();
 
   useEffect(() => {
-    if (!isRegularUser) return;
+    if (!isRegularUser || !premium) return;
     trainerAPI.getUnreadCount()
       .then((res) => setUnread(res.data.data.count))
       .catch(() => {});
-  }, [isRegularUser]);
+  }, [isRegularUser, premium]);
 
   if (!isRegularUser) return null;
+  if (!premium) return null; // hidden for free users — they see no bell
 
   const handleOpen = async () => {
     setOpen(true);

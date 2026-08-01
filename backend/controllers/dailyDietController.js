@@ -1,6 +1,7 @@
 const DailyDietPlan = require('../models/DailyDietPlan');
 const DietPlan      = require('../models/DietPlan');
 const Nutrition     = require('../models/Nutrition');
+const gamification  = require('../utils/gamification');
 
 // ── Get today's diet plan (or start one from a recommended plan) ──────────────
 const getTodayPlan = async (req, res, next) => {
@@ -124,6 +125,10 @@ const autoLogMeal = async (userId, meal, planId, mealIndex) => {
       source:   'diet_plan',
       meta:     { planId, mealIndex },
     });
+
+    // Trigger gamification for auto-logged meal
+    gamification.onMealLogged(userId, meal.protein || 0).catch(() => {});
+
     return { calories: meal.calories, protein: meal.protein };
   } catch (err) {
     console.error('Auto-log meal error:', err.message);

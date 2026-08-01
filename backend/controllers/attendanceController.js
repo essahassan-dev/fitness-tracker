@@ -90,6 +90,9 @@ const scanQR = async (req, res, next) => {
       qrToken,
     });
 
+    // Gamification
+    require('../utils/gamification').onAttendance(userId).catch(() => {});
+
     res.status(201).json({
       success: true,
       message: `Attendance marked for ${user.name}!`,

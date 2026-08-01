@@ -5,7 +5,9 @@ import {
   RiInformationLine, RiArrowRightLine, RiCalendarLine,
   RiBuilding2Line, RiGridLine, RiHomeLine, RiLightbulbLine,
   RiSunFoggyLine, RiSunLine, RiMoonLine, RiAppleLine,
+  RiSparklingLine,
 } from 'react-icons/ri';
+import { aiAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { recommendationAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -66,7 +68,28 @@ const ExerciseCard = ({ exercise }) => (
 );
 
 // ── Workout plan card ──────────────────────────────────────────────────────────
-const WorkoutCard = ({ plan, onStartPlan }) => (
+const WorkoutCard = ({ plan, onStartPlan }) => {
+  const [insight, setInsight]   = useState('');
+  const [insLoading, setInsLoading] = useState(false);
+
+  const fetchInsight = async () => {
+    setInsLoading(true);
+    try {
+      const res = await aiAPI.workoutInsight({
+        planName:       plan.name,
+        goal:           plan.goal?.[0],
+        difficulty:     plan.difficulty,
+        caloriesBurned: plan.caloriesBurned,
+        duration:       plan.duration,
+      });
+      setInsight(res.data.insight);
+    } catch { setInsight('This plan is well-suited for your fitness goals.'); }
+    finally { setInsLoading(false); }
+  };
+
+  const renderText = (t) => t?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') || '';
+
+  return (
   <div className="card hover:border-dark-700 transition-colors">
     <div className="flex items-start justify-between gap-3 mb-3">
       <div>
@@ -98,15 +121,36 @@ const WorkoutCard = ({ plan, onStartPlan }) => (
         ))}
       </div>
     )}
-    {/* Start Weekly Plan button */}
+
+    {/* AI Insight */}
+    {insight ? (
+      <div className="mb-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+        <p className="text-xs text-purple-300 mb-1 flex items-center gap-1">
+          <RiSparklingLine className="text-purple-400" /> AI Insight
+        </p>
+        <p className="text-dark-300 text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: renderText(insight) }} />
+      </div>
+    ) : (
+      <button
+        onClick={fetchInsight}
+        disabled={insLoading}
+        className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-medium transition-all mb-2"
+      >
+        {insLoading
+          ? <span className="w-3 h-3 border border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+          : <><RiSparklingLine /> Why this plan?</>}
+      </button>
+    )}
+
     <button
       onClick={() => onStartPlan(plan.equipmentType)}
-      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 text-sm font-medium transition-all mt-1"
+      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 text-sm font-medium transition-all"
     >
       <RiCalendarLine /> Start Weekly Plan with this
     </button>
   </div>
-);
+  );
+};
 
 // ── Diet plan card ─────────────────────────────────────────────────────────────
 const DietCard = ({ plan, onDietComplete }) => {

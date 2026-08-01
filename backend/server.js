@@ -31,15 +31,20 @@ app.use('/api/nutrition', require('./routes/nutrition'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/super-admin', require('./routes/superAdmin'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/subscription',    require('./routes/subscription'));
 app.use('/api/upgrade',         require('./routes/upgrade'));
 app.use('/api/trainer',         require('./routes/trainer'));
 app.use('/api/weekly-plan',     require('./routes/weeklyPlan'));
 app.use('/api/daily-diet',      require('./routes/dailyDiet'));
-app.use('/api/attendance',      require('./routes/attendance'));
+app.use('/api/attendance',           require('./routes/attendance'));
+app.use('/api/attendance-requests',  require('./routes/attendanceRequests'));
+app.use('/api/fees',                 require('./routes/fees'));
 app.use('/api/ai',              require('./routes/ai'));
 app.use('/api/notifications',   require('./routes/notifications'));
+app.use('/api/gamification',    require('./routes/gamification'));
+app.use('/api/violations',      require('./routes/violations'));
 
 // Health check
 app.get('/api/health', (req, res) => {

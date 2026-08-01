@@ -20,22 +20,33 @@ import Profile         from './pages/Profile/Profile';
 import Recommendations from './pages/Recommendations/Recommendations';
 import Attendance      from './pages/Attendance/Attendance';
 import WeeklyPlan      from './pages/WeeklyPlan/WeeklyPlan';
+import Gamification    from './pages/Gamification/Gamification';
+import Landing        from './pages/Landing/Landing';
 import Pricing         from './pages/Subscription/Pricing';
 import HowToUse        from './pages/HowToUse/HowToUse';
+import Rules            from './pages/Rules/Rules';
 
 // Admin pages
 import AdminDashboard   from './pages/Admin/AdminDashboard';
 import AdminUsers       from './pages/Admin/AdminUsers';
 import AdminUserProfile from './pages/Admin/AdminUserProfile';
 import AdminTrainers    from './pages/Admin/AdminTrainers';
+import SuperAdminLayout    from './pages/SuperAdmin/SuperAdminLayout';
+import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
+import SuperAdminAdmins    from './pages/SuperAdmin/SuperAdminAdmins';
+import SuperAdminUsers     from './pages/SuperAdmin/SuperAdminUsers';
+import SuperAdminViolations from './pages/SuperAdmin/SuperAdminViolations';
 import AdminUpgradeRequests from './pages/Admin/AdminUpgradeRequests';
 import AdminAttendance  from './pages/Admin/AdminAttendance';
+import AdminFees        from './pages/Admin/AdminFees';
+import AdminAttendanceRequests from './pages/Admin/AdminAttendanceRequests';
 
 // Trainer pages
 import TrainerLayout       from './pages/Trainer/TrainerLayout';
 import TrainerClients      from './pages/Trainer/TrainerClients';
 import TrainerClientDetail from './pages/Trainer/TrainerClientDetail';
 import TrainerAttendance   from './pages/Trainer/TrainerAttendance';
+import TrainerFees         from './pages/Trainer/TrainerFees';
 
 // ── Route guards ───────────────────────────────────────────────────────────────
 
@@ -69,15 +80,34 @@ const TrainerRoute = ({ children }) => {
   return children;
 };
 
-// ── Routes ─────────────────────────────────────────────────────────────────────
+const SuperAdminRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  if (loading) return <LoadingSpinner fullScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user || user.role !== 'super_admin') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
+// Shows landing to guests, redirects logged-in users to dashboard
+const LandingOrDashboard = () => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <LoadingSpinner fullScreen />;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <Landing />;
+};
 
 const AppRoutes = () => (
   <Routes>
-    {/* Public */}
-    <Route path="/login"              element={<PublicRoute><Login /></PublicRoute>} />
-    <Route path="/register"           element={<PublicRoute><Register /></PublicRoute>} />
+    {/* Landing — main entry point */}
+    <Route path="/"         element={<LandingOrDashboard />} />
+    <Route path="/home"     element={<Landing />} />
+    <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
+    <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
     <Route path="/pricing"            element={<Pricing />} />
     <Route path="/auth/google/success" element={<GoogleSuccess />} />
+
+    {/* Rules & Regulations — accessible to all authenticated users */}
+    <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
 
     {/* App — protected */}
     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -89,6 +119,7 @@ const AppRoutes = () => (
       <Route path="analytics"       element={<Analytics />} />
       <Route path="recommendations" element={<Recommendations />} />
       <Route path="weekly-plan"     element={<WeeklyPlan />} />
+      <Route path="gamification"    element={<Gamification />} />
       <Route path="attendance"      element={<Attendance />} />
       <Route path="how-to-use"      element={<HowToUse />} />
       <Route path="profile"         element={<Profile />} />
@@ -102,6 +133,8 @@ const AppRoutes = () => (
       <Route path="trainers"    element={<AdminTrainers />} />
       <Route path="upgrades"    element={<AdminUpgradeRequests />} />
       <Route path="attendance"  element={<AdminAttendance />} />
+      <Route path="fees"                 element={<AdminFees />} />
+      <Route path="attendance-requests"  element={<AdminAttendanceRequests />} />
     </Route>
 
     {/* Trainer */}
@@ -109,10 +142,19 @@ const AppRoutes = () => (
       <Route index                    element={<TrainerClients />} />
       <Route path="client/:userId"    element={<TrainerClientDetail />} />
       <Route path="attendance"        element={<TrainerAttendance />} />
+      <Route path="fees"              element={<TrainerFees />} />
+    </Route>
+
+    {/* Super Admin */}
+    <Route path="/super-admin" element={<SuperAdminRoute><SuperAdminLayout /></SuperAdminRoute>}>
+      <Route index              element={<SuperAdminDashboard />} />
+      <Route path="admins"      element={<SuperAdminAdmins />} />
+      <Route path="users"       element={<SuperAdminUsers />} />
+      <Route path="violations"  element={<SuperAdminViolations />} />
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );
 
