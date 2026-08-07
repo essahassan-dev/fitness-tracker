@@ -92,6 +92,9 @@ const getDashboardStats = async (req, res, next) => {
     });
   } catch (err) { next(err); }
 };
+
+// ── Legacy: Platform overview ──────────────────────────────────────────────────
+const getPlatformStats = async (req, res, next) => {
   try {
     const [totalUsers, totalAdmins, totalTrainers, bannedUsers, premiumUsers,
       totalWorkouts, totalNutrition, totalFees, totalRevenue] = await Promise.all([

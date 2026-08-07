@@ -27,7 +27,7 @@ const { getSettings, getAllSettings, updateSettings, testSmtp, createApiKey, rev
 const { listSessions, forceLogoutSession } = require('../controllers/sessionController');
 
 const {
-  listViolations, createViolation, getUserViolations,
+  getAllViolations, createViolation, getUserViolations,
   resolveViolation, dismissViolation, getBlacklist,
 } = require('../controllers/violationController');
 
@@ -94,10 +94,10 @@ router.get('/sessions',          listSessions);
 router.delete('/sessions/:id',   forceLogoutSession);
 
 // ── Violations (existing) ──────────────────────────────────────────────────────
-router.get('/violations',              listViolations || ((req, res) => res.json({ success: true, data: [] })));
-router.get('/violations/blacklist',    getBlacklist   || ((req, res) => res.json({ success: true, data: [] })));
-router.get('/violations/user/:userId', getUserViolations || ((req, res) => res.json({ success: true, data: [] })));
-router.put('/violations/:id/resolve',  resolveViolation  || ((req, res) => res.json({ success: true })));
-router.put('/violations/:id/dismiss',  dismissViolation  || ((req, res) => res.json({ success: true })));
+router.get('/violations',              getAllViolations);
+router.get('/violations/blacklist',    getBlacklist);
+router.get('/violations/user/:userId', getUserViolations);
+router.put('/violations/:id/resolve',  resolveViolation);
+router.put('/violations/:id/dismiss',  dismissViolation);
 
 module.exports = router;
