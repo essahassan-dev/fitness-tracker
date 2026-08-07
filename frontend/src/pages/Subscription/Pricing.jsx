@@ -51,12 +51,13 @@ const Pricing = () => {
     yearly:  { amount: 79.99, label: '/year'  },
   };
 
-  // Check if user has a pending request
+  // Check if user has a pending request — only when logged in
   React.useEffect(() => {
+    if (!user) return;
     upgradeAPI.getMyRequest()
       .then((res) => { if (res.data.data?.status === 'PENDING') setPendingRequest(res.data.data); })
       .catch(() => {});
-  }, []);
+  }, [user]);
 
   const alreadyPremium = isPremium() || user?.role === 'admin';
 

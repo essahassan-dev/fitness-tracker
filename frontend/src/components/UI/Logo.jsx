@@ -1,76 +1,65 @@
-import React, { useId } from 'react';
+import React from 'react';
 
-// FitStack Logo — Stacked bars (progress/stack) + Lightning bolt (energy/fit)
-// Uses useId() so multiple instances on the same page never conflict on SVG defs
+// FitStack Logo — Exact recreation of the bold italic "F" mark
+// Transparent background, white shape — matches reference image exactly
+// size: 'sm' (28px) | 'md' (36px) | 'lg' (44px) | 'xl' (56px)
 
 const Logo = ({ size = 'md', showText = true, textSize = 'text-xl' }) => {
-  const uid  = useId().replace(/:/g, '');
-  const dims = { sm: 32, md: 40, lg: 48, xl: 64 };
-  const px   = dims[size] || 40;
-
-  const gBg      = `${uid}_bg`;
-  const gAccent  = `${uid}_ac`;
-  const gGlow    = `${uid}_gl`;
+  const dims = { sm: 28, md: 36, lg: 44, xl: 56 };
+  const px = dims[size] || 36;
 
   return (
     <div className="flex items-center gap-2.5">
+      {/*
+        SVG viewBox 0 0 100 100, transparent background
+        Recreating the exact F from reference:
+        - Top horizontal bar: wide, italic slant on both ends
+        - Bottom section: italic vertical stem + shorter middle crossbar
+        Both parts have the same italic/forward-lean angle (~15deg)
+      */}
       <svg
         width={px}
         height={px}
-        viewBox="0 0 40 40"
+        viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="flex-shrink-0"
-        aria-label="FitStack logo"
+        aria-label="FitStack"
       >
-        <defs>
-          {/* Blue background gradient */}
-          <linearGradient id={gBg} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-            <stop offset="0%"   stopColor="#60a5fa" />
-            <stop offset="100%" stopColor="#2563eb" />
-          </linearGradient>
+        {/* ── TOP BAR ──
+            Left edge: diagonal (bottom-left to top-right lean)
+            Right edge: same diagonal cut
+            Wide bar roughly top 30% of mark
+        */}
+        <polygon
+          points="22,20  80,20  74,38  16,38"
+          fill="white"
+        />
 
-          {/* White/light icon accent */}
-          <linearGradient id={gAccent} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-            <stop offset="0%"   stopColor="#ffffff" stopOpacity="1"  />
-            <stop offset="100%" stopColor="#dbeafe" stopOpacity="0.9"/>
-          </linearGradient>
-
-          {/* Soft glow on bolt */}
-          <filter id={gGlow} x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="1.5" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Rounded square background */}
-        <rect width="40" height="40" rx="9" fill={`url(#${gBg})`} />
-        {/* Depth overlay */}
-        <rect width="40" height="40" rx="9" fill="#0f2040" opacity="0.28" />
-
-        {/* ── 3 ascending stacked bars (left) — the "Stack" ── */}
-        <rect x="7"  y="27" width="8" height="4" rx="1.5" fill={`url(#${gAccent})`} opacity="0.50" />
-        <rect x="7"  y="20" width="8" height="4" rx="1.5" fill={`url(#${gAccent})`} opacity="0.72" />
-        <rect x="7"  y="13" width="8" height="4" rx="1.5" fill={`url(#${gAccent})`} opacity="0.95" />
-
-        {/* ── Lightning bolt (right) — the "Fit" energy ── */}
-        <path
-          d="M24 8 L16 22 L21.5 22 L16 32 L30 17 L24 17 Z"
-          fill={`url(#${gAccent})`}
-          filter={`url(#${gGlow})`}
+        {/* ── BOTTOM SECTION ──
+            Vertical stem (left side, italic — leans right going up)
+            + Middle crossbar branching right
+            Combined as one shape
+        */}
+        <polygon
+          points="
+            16,44
+            74,44
+            68,58
+            36,58
+            30,80
+            16,80
+          "
+          fill="white"
         />
       </svg>
 
       {showText && (
         <span
-          className={`font-black tracking-tight ${textSize} leading-none`}
-          style={{ letterSpacing: '-0.03em', color: '#ffffff' }}
+          className={`font-black tracking-tight ${textSize} leading-none text-white`}
+          style={{ letterSpacing: '-0.02em' }}
         >
-          {'Fit'}
-          <span style={{ color: '#60a5fa' }}>Stack</span>
+          FitStack
         </span>
       )}
     </div>

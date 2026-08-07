@@ -1,56 +1,66 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  RiShieldCheckLine, RiAlertLine, RiErrorWarningLine,
-  RiCloseLine, RiCheckLine, RiUserLine, RiGroupLine,
-  RiAddLine, RiSearchLine, RiRefreshLine, RiFilterLine,
-  RiProhibitedLine, RiCheckboxCircleLine, RiFileTextLine,
+  RiShieldCheckLine, RiAlertLine, RiCloseLine, RiCheckLine,
+  RiUserLine, RiAddLine, RiRefreshLine, RiProhibitedLine,
+  RiCheckboxCircleLine, RiFileTextLine, RiTimeLine, RiArrowRightLine,
 } from 'react-icons/ri';
 import { violationAPI, superAdminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const severityConfig = {
-  warning:  { label: 'Warning',  color: 'text-yellow-400',  bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  severe:   { label: 'Severe',   color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20' },
-  critical: { label: 'Critical', color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20'       },
+const SEV = {
+  warning:  { label: 'Warning',  dot: 'bg-yellow-400', text: 'text-yellow-400', badge: 'bg-yellow-400/10 border-yellow-400/20 text-yellow-400' },
+  severe:   { label: 'Severe',   dot: 'bg-orange-400', text: 'text-orange-400', badge: 'bg-orange-400/10 border-orange-400/20 text-orange-400' },
+  critical: { label: 'Critical', dot: 'bg-red-400',    text: 'text-red-400',    badge: 'bg-red-400/10    border-red-400/20    text-red-400'    },
 };
-const statusConfig = {
-  active:   { label: 'Active',   color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20'       },
-  resolved: { label: 'Resolved', color: 'text-green-400',   bg: 'bg-green-500/10 border-green-500/20'   },
-  dismissed:{ label: 'Dismissed',color: 'text-dark-400',    bg: 'bg-dark-700/40 border-dark-600'        },
+const STA = {
+  active:    { label: 'Open',      badge: 'bg-red-400/10    border-red-400/20    text-red-400'    },
+  resolved:  { label: 'Resolved',  badge: 'bg-green-400/10  border-green-400/20  text-green-400'  },
+  dismissed: { label: 'Dismissed', badge: 'bg-slate-400/10  border-slate-400/20  text-slate-400'  },
 };
 
-const tabs = [
-  { id: 'violations', label: 'All Violations', icon: RiAlertLine      },
-  { id: 'blacklist',  label: 'Blacklist',       icon: RiProhibitedLine },
-];
+const fmtDate = (d) => d
+  ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  : '—';
+
+const Badge = ({ cfg, label }) => (
+  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.badge}`}>
+    {label}
+  </span>
+);
+
+const Spinner = () => (
+  <div className="flex items-center justify-center py-24">
+    <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 export default function SuperAdminViolations() {
-  const [activeTab, setActiveTab]     = useState('violations');
-  const [violations, setViolations]   = useState([]);
-  const [blacklist, setBlacklist]     = useState([]);
-  const [rules, setRules]             = useState([]);
-  const [allUsers, setAllUsers]       = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [filters, setFilters]         = useState({ status: 'all', severity: 'all' });
-  const [showCreate, setShowCreate]   = useState(false);
-  const [showResolve, setShowResolve] = useState(null); // violation obj
+  const [tab, setTab]             = useState('violations');
+  const [violations, setViolations] = useState([]);
+  const [blacklist, setBlacklist]   = useState([]);
+  const [rules, setRules]           = useState([]);
+  const [allUsers, setAllUsers]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [filters, setFilters]       = useState({ status: 'all', severity: 'all' });
+  const [showCreate, setShowCreate] = useState(false);
+  const [showResolve, setShowResolve] = useState(null);
   const [resolveNote, setResolveNote] = useState('');
-  const [creating, setCreating]       = useState(false);
-  const [newVio, setNewVio]           = useState({ userId: '', rule: '', description: '', severity: 'warning' });
+  const [creating, setCreating]     = useState(false);
+  const [newVio, setNewVio]         = useState({ userId:'', rule:'', description:'', severity:'warning' });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [vRes, bRes, rRes, uRes] = await Promise.all([
+      const [vR, bR, rR, uR] = await Promise.all([
         violationAPI.getAll(filters),
         violationAPI.getBlacklist(),
         violationAPI.getRules(),
         superAdminAPI.getAllUsers({ limit: 500 }),
       ]);
-      setViolations(vRes.data.data);
-      setBlacklist(bRes.data.data);
-      setRules(rRes.data.data);
-      setAllUsers((uRes.data.data || []).filter(u => u.role !== 'super_admin'));
+      setViolations(vR.data.data);
+      setBlacklist(bR.data.data);
+      setRules(rR.data.data);
+      setAllUsers((uR.data.data || []).filter(u => u.role !== 'super_admin'));
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
   }, [filters]);
@@ -59,166 +69,204 @@ export default function SuperAdminViolations() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!newVio.userId || !newVio.rule || !newVio.description.trim())
-      return toast.error('Fill all fields');
+    if (!newVio.userId || !newVio.rule || !newVio.description.trim()) return toast.error('Please fill all fields');
     setCreating(true);
     try {
       await violationAPI.create(newVio);
-      toast.success('Violation filed. User notified.');
+      toast.success('Violation filed successfully. User has been notified.');
       setShowCreate(false);
-      setNewVio({ userId: '', rule: '', description: '', severity: 'warning' });
+      setNewVio({ userId:'', rule:'', description:'', severity:'warning' });
       load();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed');
-    } finally { setCreating(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to file violation'); }
+    finally { setCreating(false); }
   };
 
   const handleResolve = async () => {
     try {
       await violationAPI.resolve(showResolve._id, { resolvedNote });
       toast.success('Violation resolved');
-      setShowResolve(null);
-      setResolveNote('');
-      load();
+      setShowResolve(null); setResolveNote(''); load();
     } catch { toast.error('Failed to resolve'); }
   };
 
   const handleDismiss = async (id) => {
-    if (!window.confirm('Dismiss this violation?')) return;
-    try {
-      await violationAPI.dismiss(id);
-      toast.success('Violation dismissed');
-      load();
-    } catch { toast.error('Failed'); }
+    if (!window.confirm('Dismiss this violation? This action cannot be undone.')) return;
+    try { await violationAPI.dismiss(id); toast.success('Violation dismissed'); load(); }
+    catch { toast.error('Failed to dismiss'); }
   };
 
   const handleUnban = async (userId) => {
-    if (!window.confirm('Unban this user?')) return;
-    try {
-      await superAdminAPI.banUser(userId, { reason: 'Unbanned by super admin' });
-      toast.success('User unbanned');
-      load();
-    } catch { toast.error('Failed to unban'); }
+    if (!window.confirm('Restore this account? The user will regain full access.')) return;
+    try { await superAdminAPI.banUser(userId, { reason: 'Unbanned by super admin' }); toast.success('Account restored'); load(); }
+    catch { toast.error('Failed to restore account'); }
   };
 
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+  const stats = [
+    { label: 'Total',      value: violations.length,                                      accent: '#a78bfa' },
+    { label: 'Open',       value: violations.filter(v=>v.status==='active').length,        accent: '#f87171' },
+    { label: 'Resolved',   value: violations.filter(v=>v.status==='resolved').length,      accent: '#4ade80' },
+    { label: 'Blacklisted',value: blacklist.length,                                        accent: '#fb923c' },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Rules Enforcement</h1>
-          <p className="text-dark-400 text-sm mt-0.5">Manage violations, warnings, and blacklisted accounts</p>
+          <h1 className="text-xl font-bold text-white">Rules Enforcement</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Review violations, manage warnings, and maintain platform integrity</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={load} className="btn-secondary flex items-center gap-2 text-sm">
-            <RiRefreshLine /> Refresh
+          <button onClick={load}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all">
+            <RiRefreshLine className="text-base"/> Refresh
           </button>
-          <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm">
-            <RiAddLine /> File Violation
+          <button onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
+            style={{background:'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow:'0 0 20px rgba(124,58,237,0.3)'}}>
+            <RiAddLine className="text-base"/> File Violation
           </button>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Violations', value: violations.length, color: 'text-brand-400' },
-          { label: 'Active',           value: violations.filter(v => v.status === 'active').length,   color: 'text-red-400' },
-          { label: 'Resolved',         value: violations.filter(v => v.status === 'resolved').length, color: 'text-green-400' },
-          { label: 'Blacklisted',      value: blacklist.length,  color: 'text-orange-400' },
-        ].map(s => (
-          <div key={s.label} className="rounded-xl border border-dark-700 bg-dark-800/60 p-4 text-center">
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-dark-400 text-xs mt-1">{s.label}</p>
+      {/* ── Stats row ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {stats.map(s => (
+          <div key={s.label} className="rounded-2xl p-4" style={{background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)'}}>
+            <p className="text-2xl font-black mb-0.5" style={{color:s.accent}}>{s.value}</p>
+            <p className="text-slate-500 text-xs font-medium">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 bg-dark-800/60 rounded-xl p-1 w-fit border border-dark-700">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === t.id ? 'bg-brand-600 text-white shadow' : 'text-dark-400 hover:text-white'
-            }`}>
-            <t.icon className="text-base" /> {t.label}
+      {/* ── Tabs ── */}
+      <div className="flex items-center gap-0 rounded-xl overflow-hidden w-fit" style={{border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)'}}>
+        {[
+          { id:'violations', label:'Violations', icon:RiAlertLine },
+          { id:'blacklist',  label:'Blacklist',  icon:RiProhibitedLine },
+        ].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all ${
+              tab === t.id
+                ? 'text-white'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+            style={tab === t.id ? {background:'rgba(124,58,237,0.3)', borderRight:'1px solid rgba(124,58,237,0.3)'} : {}}>
+            <t.icon className="text-base"/> {t.label}
+            {t.id==='violations' && violations.filter(v=>v.status==='active').length > 0 && (
+              <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center text-white"
+                style={{background:'#ef4444'}}>
+                {violations.filter(v=>v.status==='active').length}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Violations Tab */}
-      {activeTab === 'violations' && (
+      {/* ── Violations tab ── */}
+      {tab === 'violations' && (
         <div className="space-y-4">
-          {/* Filters */}
+          {/* Filter bar */}
           <div className="flex items-center gap-3 flex-wrap">
-            <select value={filters.status} onChange={e => setFilters(p => ({ ...p, status: e.target.value }))}
-              className="input text-sm py-2 pl-3 pr-8">
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="resolved">Resolved</option>
-              <option value="dismissed">Dismissed</option>
-            </select>
-            <select value={filters.severity} onChange={e => setFilters(p => ({ ...p, severity: e.target.value }))}
-              className="input text-sm py-2 pl-3 pr-8">
-              <option value="all">All Severities</option>
-              <option value="warning">Warning</option>
-              <option value="severe">Severe</option>
-              <option value="critical">Critical</option>
-            </select>
+            {['all','active','resolved','dismissed'].map(s => (
+              <button key={s} onClick={() => setFilters(p=>({...p, status:s}))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  filters.status===s
+                    ? 'text-white bg-purple-600/40 border border-purple-500/40'
+                    : 'text-slate-500 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.15]'
+                }`}>
+                {s === 'all' ? 'All Statuses' : s}
+              </button>
+            ))}
+            <div className="w-px h-5 bg-white/10"/>
+            {['all','warning','severe','critical'].map(s => (
+              <button key={s} onClick={() => setFilters(p=>({...p, severity:s}))}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  filters.severity===s
+                    ? 'text-white bg-purple-600/40 border border-purple-500/40'
+                    : 'text-slate-500 hover:text-white bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.15]'
+                }`}>
+                {s === 'all' ? 'All Severities' : s}
+              </button>
+            ))}
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : violations.length === 0 ? (
-            <div className="text-center py-20 text-dark-500">
-              <RiShieldCheckLine className="text-4xl mx-auto mb-3 text-green-500/40" />
-              <p className="font-medium text-white">No violations found</p>
-              <p className="text-sm mt-1">All clear — no rules have been broken</p>
+          {loading ? <Spinner/> : violations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+                style={{background:'rgba(74,222,128,0.08)', border:'1px solid rgba(74,222,128,0.15)'}}>
+                <RiShieldCheckLine className="text-green-400 text-2xl"/>
+              </div>
+              <p className="text-white font-semibold text-base">No violations found</p>
+              <p className="text-slate-500 text-sm mt-1">Platform is in good standing</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {violations.map(v => {
-                const sev = severityConfig[v.severity] || severityConfig.warning;
-                const sta = statusConfig[v.status]     || statusConfig.active;
+            <div className="rounded-2xl overflow-hidden" style={{border:'1px solid rgba(255,255,255,0.07)'}}>
+              {/* Table header */}
+              <div className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600"
+                style={{background:'rgba(255,255,255,0.02)', borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                <div className="col-span-3">User</div>
+                <div className="col-span-3">Rule</div>
+                <div className="col-span-2">Severity</div>
+                <div className="col-span-1">Status</div>
+                <div className="col-span-1">Date</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+              {violations.map((v, i) => {
+                const sev = SEV[v.severity] || SEV.warning;
+                const sta = STA[v.status]   || STA.active;
                 return (
-                  <div key={v._id} className="rounded-xl border border-dark-700 bg-dark-800/60 p-5 hover:border-dark-600 transition-all">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${sev.bg} ${sev.color}`}>{sev.label}</span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${sta.bg} ${sta.color}`}>{sta.label}</span>
-                          <span className="text-dark-500 text-xs">{fmtDate(v.createdAt)}</span>
-                        </div>
-                        <h3 className="text-white font-semibold text-sm">{v.rule}</h3>
-                        <p className="text-dark-400 text-sm mt-1">{v.description}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-dark-500">
-                          <span className="flex items-center gap-1">
-                            <RiUserLine /> User: <span className="text-white">{v.user?.name || '—'}</span>
-                            ({v.user?.email}) — <span className="capitalize text-brand-400">{v.user?.role}</span>
-                          </span>
-                          {v.reportedBy && (
-                            <span>Filed by: <span className="text-white">{v.reportedBy.name}</span></span>
-                          )}
-                        </div>
-                        {v.resolvedNote && (
-                          <p className="text-green-400 text-xs mt-2 italic">Note: {v.resolvedNote}</p>
-                        )}
+                  <div key={v._id}
+                    className="grid grid-cols-12 gap-4 px-5 py-4 items-center hover:bg-white/[0.02] transition-colors group"
+                    style={{borderBottom: i < violations.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none'}}>
+                    {/* User */}
+                    <div className="col-span-3 flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold text-white"
+                        style={{background:'rgba(124,58,237,0.2)', border:'1px solid rgba(124,58,237,0.3)'}}>
+                        {v.user?.name?.charAt(0).toUpperCase() || '?'}
                       </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{v.user?.name || '—'}</p>
+                        <p className="text-slate-500 text-xs truncate">{v.user?.email}</p>
+                      </div>
+                    </div>
+                    {/* Rule */}
+                    <div className="col-span-3 min-w-0">
+                      <p className="text-slate-200 text-sm font-medium truncate">{v.rule}</p>
+                      {v.description && <p className="text-slate-500 text-xs truncate mt-0.5">{v.description}</p>}
+                    </div>
+                    {/* Severity */}
+                    <div className="col-span-2">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${sev.badge}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`}/>
+                        {sev.label}
+                      </span>
+                    </div>
+                    {/* Status */}
+                    <div className="col-span-1">
+                      <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${sta.badge}`}>{sta.label}</span>
+                    </div>
+                    {/* Date */}
+                    <div className="col-span-1">
+                      <p className="text-slate-500 text-xs">{fmtDate(v.createdAt)}</p>
+                    </div>
+                    {/* Actions */}
+                    <div className="col-span-2 flex items-center justify-end gap-2">
                       {v.status === 'active' && (
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <>
                           <button onClick={() => { setShowResolve(v); setResolveNote(''); }}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-xs hover:bg-green-500/20 transition-colors">
-                            <RiCheckLine /> Resolve
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-green-400 border border-green-400/20 bg-green-400/8 hover:bg-green-400/15 transition-colors flex items-center gap-1">
+                            <RiCheckLine/> Resolve
                           </button>
                           <button onClick={() => handleDismiss(v._id)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-dark-700/60 border border-dark-600 text-dark-400 text-xs hover:text-white hover:bg-dark-700 transition-colors">
-                            <RiCloseLine /> Dismiss
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-colors flex items-center gap-1">
+                            <RiCloseLine/> Dismiss
                           </button>
-                        </div>
+                        </>
+                      )}
+                      {v.status !== 'active' && v.resolvedNote && (
+                        <p className="text-slate-600 text-xs italic truncate max-w-[120px]" title={v.resolvedNote}>{v.resolvedNote}</p>
                       )}
                     </div>
                   </div>
@@ -229,113 +277,132 @@ export default function SuperAdminViolations() {
         </div>
       )}
 
-      {/* Blacklist Tab */}
-      {activeTab === 'blacklist' && (
-        <div className="space-y-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      {/* ── Blacklist tab ── */}
+      {tab === 'blacklist' && (
+        loading ? <Spinner/> : blacklist.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{background:'rgba(74,222,128,0.08)', border:'1px solid rgba(74,222,128,0.15)'}}>
+              <RiCheckboxCircleLine className="text-green-400 text-2xl"/>
             </div>
-          ) : blacklist.length === 0 ? (
-            <div className="text-center py-20 text-dark-500">
-              <RiCheckboxCircleLine className="text-4xl mx-auto mb-3 text-green-500/40" />
-              <p className="font-medium text-white">No blacklisted accounts</p>
-              <p className="text-sm mt-1">All accounts are currently in good standing</p>
+            <p className="text-white font-semibold">No blacklisted accounts</p>
+            <p className="text-slate-500 text-sm mt-1">All accounts are in good standing</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{border:'1px solid rgba(255,255,255,0.07)'}}>
+            <div className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600"
+              style={{background:'rgba(255,255,255,0.02)', borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div className="col-span-3">Account</div>
+              <div className="col-span-2">Role</div>
+              <div className="col-span-4">Violation Reason</div>
+              <div className="col-span-1">Date</div>
+              <div className="col-span-2 text-right">Action</div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {blacklist.map(u => (
-                <div key={u._id} className="rounded-xl border border-red-500/20 bg-red-500/5 p-5 hover:border-red-500/30 transition-all">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
-                        <RiProhibitedLine className="text-red-400 text-lg" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-white font-semibold">{u.name}</h3>
-                          <span className="px-2 py-0.5 rounded-full bg-dark-700 text-dark-300 text-xs capitalize border border-dark-600">{u.role}</span>
-                          <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 text-xs border border-red-500/20">Blacklisted</span>
-                        </div>
-                        <p className="text-dark-400 text-sm mt-0.5">{u.email}</p>
-                        {u.latestViolation ? (
-                          <div className="mt-2 px-3 py-2 rounded-lg bg-dark-800/60 border border-dark-700 text-xs space-y-0.5">
-                            <p className="text-dark-300 font-medium">Violation: <span className="text-white">{u.latestViolation.rule}</span></p>
-                            <p className="text-dark-400">{u.latestViolation.description}</p>
-                            <p className="text-dark-500">Filed: {fmtDate(u.latestViolation.createdAt)}</p>
-                          </div>
-                        ) : (
-                          <p className="text-dark-500 text-xs mt-1">Banned manually (no violation on file)</p>
-                        )}
-                      </div>
-                    </div>
-                    <button onClick={() => handleUnban(u._id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm hover:bg-green-500/20 transition-colors flex-shrink-0">
-                      <RiCheckboxCircleLine /> Unban
-                    </button>
+            {blacklist.map((u, i) => (
+              <div key={u._id}
+                className="grid grid-cols-12 gap-4 px-5 py-4 items-center hover:bg-white/[0.02] transition-colors"
+                style={{borderBottom: i < blacklist.length-1 ? '1px solid rgba(255,255,255,0.04)':'none'}}>
+                {/* Account */}
+                <div className="col-span-3 flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold text-red-400"
+                    style={{background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.2)'}}>
+                    {u.name?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{u.name}</p>
+                    <p className="text-slate-500 text-xs truncate">{u.email}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                {/* Role */}
+                <div className="col-span-2">
+                  <span className="px-2 py-0.5 rounded-md text-xs font-medium border border-white/10 bg-white/[0.04] text-slate-300 capitalize">{u.role}</span>
+                </div>
+                {/* Reason */}
+                <div className="col-span-4 min-w-0">
+                  {u.latestViolation ? (
+                    <div>
+                      <p className="text-slate-300 text-xs font-medium truncate">{u.latestViolation.rule}</p>
+                      <p className="text-slate-500 text-xs truncate mt-0.5">{u.latestViolation.description}</p>
+                    </div>
+                  ) : (
+                    <p className="text-slate-600 text-xs italic">No violation on file — manually banned</p>
+                  )}
+                </div>
+                {/* Date */}
+                <div className="col-span-1">
+                  <p className="text-slate-500 text-xs">{fmtDate(u.latestViolation?.createdAt)}</p>
+                </div>
+                {/* Action */}
+                <div className="col-span-2 flex justify-end">
+                  <button onClick={() => handleUnban(u._id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-green-400 border border-green-400/20 bg-green-400/8 hover:bg-green-400/15 transition-colors">
+                    <RiCheckboxCircleLine/> Restore
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
-      {/* Create Violation Modal */}
+      {/* ── File Violation Modal ── */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dark-700">
-              <h2 className="text-white font-bold text-lg flex items-center gap-2">
-                <RiAlertLine className="text-orange-400" /> File a Violation
-              </h2>
-              <button onClick={() => setShowCreate(false)} className="text-dark-400 hover:text-white"><RiCloseLine className="text-xl" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
+            style={{background:'#0d1424', border:'1px solid rgba(124,58,237,0.25)'}}>
+            <div className="flex items-center justify-between px-6 py-4" style={{borderBottom:'1px solid rgba(255,255,255,0.07)'}}>
+              <div>
+                <h2 className="text-white font-bold text-base">File a Violation</h2>
+                <p className="text-slate-500 text-xs mt-0.5">The user will be notified immediately</p>
+              </div>
+              <button onClick={() => setShowCreate(false)} className="text-slate-500 hover:text-white p-1 transition-colors"><RiCloseLine className="text-xl"/></button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-dark-300 text-sm font-medium mb-1.5">Target User / Admin</label>
-                <select value={newVio.userId} onChange={e => setNewVio(p => ({ ...p, userId: e.target.value }))}
-                  className="input w-full" required>
-                  <option value="">Select account...</option>
-                  {allUsers.map(u => (
-                    <option key={u._id} value={u._id}>{u.name} ({u.email}) — {u.role}</option>
-                  ))}
+                <label className="block text-slate-400 text-xs font-semibold mb-1.5 tracking-wide">TARGET ACCOUNT</label>
+                <select value={newVio.userId} onChange={e=>setNewVio(p=>({...p,userId:e.target.value}))} className="input w-full" required>
+                  <option value="">Select user or admin...</option>
+                  {allUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.role}) — {u.email}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-dark-300 text-sm font-medium mb-1.5">Rule Violated</label>
-                <select value={newVio.rule} onChange={e => setNewVio(p => ({ ...p, rule: e.target.value }))}
-                  className="input w-full" required>
-                  <option value="">Select rule...</option>
+                <label className="block text-slate-400 text-xs font-semibold mb-1.5 tracking-wide">RULE VIOLATED</label>
+                <select value={newVio.rule} onChange={e=>setNewVio(p=>({...p,rule:e.target.value}))} className="input w-full" required>
+                  <option value="">Select a rule...</option>
                   {rules.map(r => <option key={r.id} value={r.title}>{r.id} — {r.title}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-dark-300 text-sm font-medium mb-1.5">Severity</label>
-                <select value={newVio.severity} onChange={e => setNewVio(p => ({ ...p, severity: e.target.value }))}
-                  className="input w-full">
-                  <option value="warning">Warning — formal notice</option>
-                  <option value="severe">Severe — risk of suspension</option>
-                  <option value="critical">Critical — immediate blacklist</option>
-                </select>
-                {newVio.severity === 'critical' && (
-                  <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
-                    <RiAlertLine /> Critical violations will immediately blacklist the user
+                <label className="block text-slate-400 text-xs font-semibold mb-1.5 tracking-wide">SEVERITY LEVEL</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['warning','severe','critical'].map(s => (
+                    <button type="button" key={s} onClick={() => setNewVio(p=>({...p,severity:s}))}
+                      className={`py-2.5 rounded-xl text-xs font-semibold capitalize border transition-all ${
+                        newVio.severity===s
+                          ? s==='warning' ? 'bg-yellow-400/15 border-yellow-400/40 text-yellow-400'
+                          : s==='severe'  ? 'bg-orange-400/15 border-orange-400/40 text-orange-400'
+                          :                 'bg-red-400/15    border-red-400/40    text-red-400'
+                          : 'bg-white/[0.03] border-white/[0.08] text-slate-500 hover:text-white'
+                      }`}>{s}</button>
+                  ))}
+                </div>
+                {newVio.severity==='critical' && (
+                  <p className="text-red-400 text-xs mt-2 flex items-center gap-1.5 bg-red-400/8 border border-red-400/20 rounded-lg px-3 py-2">
+                    <RiAlertLine/> Critical violations immediately suspend the account
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-dark-300 text-sm font-medium mb-1.5">Description / Evidence</label>
-                <textarea value={newVio.description}
-                  onChange={e => setNewVio(p => ({ ...p, description: e.target.value }))}
-                  rows={3} className="input w-full resize-none"
-                  placeholder="Describe the violation in detail..." required maxLength={600} />
+                <label className="block text-slate-400 text-xs font-semibold mb-1.5 tracking-wide">DESCRIPTION & EVIDENCE</label>
+                <textarea value={newVio.description} onChange={e=>setNewVio(p=>({...p,description:e.target.value}))}
+                  rows={3} className="input w-full resize-none" placeholder="Describe the violation with specific details..." required maxLength={600}/>
+                <p className="text-slate-600 text-xs mt-1 text-right">{newVio.description.length}/600</p>
               </div>
               <div className="flex gap-3 pt-1">
-                <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary flex-1">Cancel</button>
-                <button type="submit" disabled={creating} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                  {creating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    : <><RiAddLine /> File Violation</>}
+                <button type="button" onClick={() => setShowCreate(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-white/10 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
+                <button type="submit" disabled={creating} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  style={{background:'linear-gradient(135deg,#7c3aed,#6d28d9)'}}>
+                  {creating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : <><RiAddLine/> File Violation</>}
                 </button>
               </div>
             </form>
@@ -343,37 +410,50 @@ export default function SuperAdminViolations() {
         </div>
       )}
 
-      {/* Resolve Modal */}
+      {/* ── Resolve Modal ── */}
       {showResolve && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-dark-900 rounded-2xl border border-dark-700 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dark-700">
-              <h2 className="text-white font-bold text-lg flex items-center gap-2">
-                <RiCheckLine className="text-green-400" /> Resolve Violation
-              </h2>
-              <button onClick={() => setShowResolve(null)} className="text-dark-400 hover:text-white"><RiCloseLine className="text-xl" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{background:'#0d1424', border:'1px solid rgba(74,222,128,0.2)'}}>
+            <div className="flex items-center justify-between px-6 py-4" style={{borderBottom:'1px solid rgba(255,255,255,0.07)'}}>
+              <div>
+                <h2 className="text-white font-bold text-base">Resolve Violation</h2>
+                <p className="text-slate-500 text-xs mt-0.5">Mark as resolved and optionally add a note</p>
+              </div>
+              <button onClick={() => setShowResolve(null)} className="text-slate-500 hover:text-white p-1"><RiCloseLine className="text-xl"/></button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="rounded-xl bg-dark-800/60 border border-dark-700 p-4 text-sm space-y-1">
-                <p className="text-dark-400">User: <span className="text-white">{showResolve.user?.name}</span></p>
-                <p className="text-dark-400">Rule: <span className="text-white">{showResolve.rule}</span></p>
+              <div className="rounded-xl p-4 space-y-2" style={{background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)'}}>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">User</span>
+                  <span className="text-white font-medium">{showResolve.user?.name}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Rule</span>
+                  <span className="text-slate-200 text-right max-w-[200px]">{showResolve.rule}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Filed</span>
+                  <span className="text-slate-400">{fmtDate(showResolve.createdAt)}</span>
+                </div>
               </div>
               <div>
-                <label className="block text-dark-300 text-sm font-medium mb-1.5">Resolution Note (optional)</label>
+                <label className="block text-slate-400 text-xs font-semibold mb-1.5 tracking-wide">RESOLUTION NOTE <span className="text-slate-600 font-normal normal-case">(optional)</span></label>
                 <textarea value={resolveNote} onChange={e => setResolveNote(e.target.value)}
-                  rows={3} className="input w-full resize-none"
-                  placeholder="e.g. User acknowledged violation, warned not to repeat..." maxLength={300} />
+                  rows={3} className="input w-full resize-none" placeholder="e.g. User acknowledged the violation and agreed to comply..." maxLength={300}/>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowResolve(null)} className="btn-secondary flex-1">Cancel</button>
-                <button onClick={handleResolve} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                  <RiCheckLine /> Mark Resolved
+                <button onClick={() => setShowResolve(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-white/10 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
+                <button onClick={handleResolve} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all"
+                  style={{background:'linear-gradient(135deg,#16a34a,#15803d)'}}>
+                  <RiCheckLine/> Mark Resolved
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

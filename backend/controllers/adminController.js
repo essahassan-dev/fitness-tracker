@@ -62,9 +62,9 @@ const getStats = async (req, res, next) => {
 const getAllUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 15, search = '', role = 'all', status = 'all', sort = '-createdAt' } = req.query;
-    const query = {};
+    const query = { role: { $ne: 'super_admin' } }; // never show super_admin to admin
     if (search) query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
-    if (role !== 'all') query.role = role;
+    if (role !== 'all') query.role = role === 'super_admin' ? 'user' : role; // prevent super_admin filter
     if (status === 'active')   query.isActive = true;
     if (status === 'inactive') query.isActive = false;
 
@@ -230,9 +230,11 @@ const updateUserRole = async (req, res, next) => {
     if (!['user', 'admin', 'trainer'].includes(role)) return res.status(400).json({ success: false, message: 'Invalid role' });
     if (req.params.id === req.user._id.toString()) return res.status(400).json({ success: false, message: 'Cannot change your own role' });
 
-    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.role === 'super_admin') return res.status(403).json({ success: false, message: 'Cannot modify super admin role' });
 
+    await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
     res.json({ success: true, message: `Role updated to ${role}`, data: user });
   } catch (error) { next(error); }
 };
@@ -244,6 +246,7 @@ const toggleUserStatus = async (req, res, next) => {
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.role === 'super_admin') return res.status(403).json({ success: false, message: 'Cannot modify super admin account' });
 
     user.isActive = !user.isActive;
     await user.save({ validateBeforeSave: false });
@@ -259,6 +262,7 @@ const deleteUser = async (req, res, next) => {
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.role === 'super_admin') return res.status(403).json({ success: false, message: 'Cannot delete super admin account' });
 
     await Promise.all([
       Workout.deleteMany({ user: user._id }),

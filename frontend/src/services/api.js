@@ -92,6 +92,7 @@ export const trainerAPI = {
 
 // Super Admin
 export const superAdminAPI = {
+  // Legacy
   getStats:        ()           => api.get('/super-admin/stats'),
   getAllAdmins:     (params)     => api.get('/super-admin/admins', { params }),
   getAdminDetail:  (id)         => api.get(`/super-admin/admins/${id}`),
@@ -100,6 +101,45 @@ export const superAdminAPI = {
   deleteAdmin:     (id)         => api.delete(`/super-admin/admins/${id}`),
   getAllUsers:      (params)     => api.get('/super-admin/users', { params }),
   banUser:         (id, data)   => api.put(`/super-admin/users/${id}/ban`, data),
+  // New SaaS dashboard
+  getDashboardStats: (params)   => api.get('/super-admin/dashboard/stats', { params }),
+  // Businesses
+  listBusinesses:     (params)  => api.get('/super-admin/businesses', { params }),
+  getBusinessDetail:  (id)      => api.get(`/super-admin/businesses/${id}`),
+  updateBusiness:     (id, data)=> api.put(`/super-admin/businesses/${id}`, data),
+  suspendBusiness:    (id, data)=> api.put(`/super-admin/businesses/${id}/suspend`, data),
+  activateBusiness:   (id)      => api.put(`/super-admin/businesses/${id}/activate`, {}),
+  deleteBusiness:     (id)      => api.delete(`/super-admin/businesses/${id}`),
+  changeBusinessPlan: (id, data)=> api.put(`/super-admin/businesses/${id}/change-plan`, data),
+  extendSubscription: (id, data)=> api.put(`/super-admin/businesses/${id}/extend`, data),
+  resetAdminPassword: (id)      => api.post(`/super-admin/businesses/${id}/reset-password`, {}),
+  // Plans
+  listPlans:       ()            => api.get('/super-admin/plans'),
+  createPlan:      (data)        => api.post('/super-admin/plans', data),
+  updatePlan:      (id, data)    => api.put(`/super-admin/plans/${id}`, data),
+  togglePlan:      (id)          => api.put(`/super-admin/plans/${id}/toggle`, {}),
+  deletePlan:      (id)          => api.delete(`/super-admin/plans/${id}`),
+  // Subscription requests
+  listRequests:    (params)      => api.get('/super-admin/subscription-requests', { params }),
+  approveRequest:  (id)          => api.put(`/super-admin/subscription-requests/${id}/approve`, {}),
+  rejectRequest:   (id, data)    => api.put(`/super-admin/subscription-requests/${id}/reject`, data),
+  requestMoreInfo: (id, data)    => api.put(`/super-admin/subscription-requests/${id}/info`, data),
+  // Payments
+  listPayments:    (params)      => api.get('/super-admin/payments', { params }),
+  exportPayments:  (params)      => api.get('/super-admin/payments/export', { params }),
+  refundPayment:   (id, data)    => api.put(`/super-admin/payments/${id}/refund`, data),
+  // Audit logs
+  listAuditLogs:   (params)      => api.get('/super-admin/audit-logs', { params }),
+  // Settings
+  getAllSettings:   ()            => api.get('/super-admin/settings'),
+  getSetting:      (key)          => api.get(`/super-admin/settings/${key}`),
+  updateSetting:   (key, data)    => api.patch(`/super-admin/settings/${key}`, data),
+  testSmtp:        ()             => api.post('/super-admin/settings/smtp/test', {}),
+  createApiKey:    (data)         => api.post('/super-admin/settings/api-keys', data),
+  revokeApiKey:    (id)           => api.delete(`/super-admin/settings/api-keys/${id}`),
+  // Sessions
+  listSessions:    ()             => api.get('/super-admin/sessions'),
+  forceLogout:     (id)           => api.delete(`/super-admin/sessions/${id}`),
 };
 
 // Gamification

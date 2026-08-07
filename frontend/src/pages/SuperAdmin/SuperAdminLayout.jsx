@@ -3,25 +3,39 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   RiDashboardLine, RiGroupLine, RiShieldLine,
   RiArrowLeftLine, RiMenuLine, RiCloseLine,
-  RiAlertLine,
+  RiAlertLine, RiBuildingLine, RiPriceTagLine,
+  RiFileListLine, RiMoneyDollarCircleLine, RiBarChartLine,
+  RiSettings3Line, RiShieldCheckLine, RiUserLine, RiBellLine,
 } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
 import Logo from '../../components/UI/Logo';
+import { SuperAdminProvider } from '../../context/SuperAdminContext';
+import SANotificationBell from './SA_Notifications/NotificationBell';
+import GlobalSearchModal from './shared/GlobalSearchModal';
+import { useSuperAdmin } from '../../context/SuperAdminContext';
 
 const nav = [
-  { to: '/super-admin',            icon: RiDashboardLine, label: 'Overview',          end: true },
-  { to: '/super-admin/admins',     icon: RiShieldLine,    label: 'Admin Accounts' },
-  { to: '/super-admin/users',      icon: RiGroupLine,     label: 'All Users' },
-  { to: '/super-admin/violations', icon: RiAlertLine,     label: 'Rules Enforcement' },
+  { to: '/super-admin',                    icon: RiDashboardLine,         label: 'Overview',              end: true },
+  { to: '/super-admin/businesses',         icon: RiBuildingLine,          label: 'Businesses' },
+  { to: '/super-admin/plans',              icon: RiPriceTagLine,          label: 'Plans' },
+  { to: '/super-admin/subscription-requests', icon: RiFileListLine,       label: 'Requests' },
+  { to: '/super-admin/payments',           icon: RiMoneyDollarCircleLine, label: 'Payments' },
+  { to: '/super-admin/users',              icon: RiGroupLine,             label: 'Users' },
+  { to: '/super-admin/analytics',          icon: RiBarChartLine,          label: 'Analytics' },
+  { to: '/super-admin/notifications',      icon: RiBellLine,              label: 'Notifications' },
+  { to: '/super-admin/settings',           icon: RiSettings3Line,         label: 'Settings' },
+  { to: '/super-admin/security',           icon: RiShieldCheckLine,       label: 'Security' },
+  { to: '/super-admin/violations',         icon: RiAlertLine,             label: 'Rules Enforcement' },
+  { to: '/super-admin/admins',             icon: RiShieldLine,            label: 'Admin Accounts' },
 ];
 
-const SuperAdminLayout = () => {
-  const { user, logout } = useAuth();
+const SidebarInner = ({ onClose }) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { openSearch } = useSuperAdmin();
 
-  const Sidebar = () => (
+  return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-5 border-b border-dark-800"
         style={{ background: 'linear-gradient(135deg, rgba(109,40,217,0.2), rgba(15,23,42,0.8))' }}>
@@ -32,16 +46,25 @@ const SuperAdminLayout = () => {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Search shortcut */}
+      <div className="px-3 pt-3">
+        <button onClick={openSearch}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-white bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all">
+          <span className="text-xs">Search...</span>
+          <kbd className="ml-auto text-xs px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-600 font-mono">⌘K</kbd>
+        </button>
+      </div>
+
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {nav.map(({ to, icon: Icon, label, end }) => (
-          <NavLink key={to} to={to} end={end} onClick={() => setMobileOpen(false)}
+          <NavLink key={to} to={to} end={end} onClick={onClose}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <Icon className="text-lg flex-shrink-0" />
             <span>{label}</span>
           </NavLink>
         ))}
-        <div className="pt-3 mt-3 border-t border-dark-800">
-          <button onClick={() => navigate('/dashboard')} className="sidebar-link w-full text-dark-400">
+        <div className="pt-3 mt-2 border-t border-dark-800">
+          <button onClick={() => { navigate('/dashboard'); onClose?.(); }} className="sidebar-link w-full text-dark-400">
             <RiArrowLeftLine className="text-lg" /> Back to App
           </button>
         </div>
@@ -57,32 +80,42 @@ const SuperAdminLayout = () => {
             <p className="text-white text-sm font-medium truncate">{user?.name}</p>
             <p className="text-purple-400 text-xs">Super Admin</p>
           </div>
+          <SANotificationBell />
         </div>
       </div>
     </div>
   );
+};
+
+const SuperAdminLayoutInner = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-dark-950">
+      {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-dark-900 border-r border-dark-800 h-screen sticky top-0 flex-shrink-0">
-        <Sidebar />
+        <SidebarInner onClose={() => {}} />
       </aside>
 
+      {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-dark-900 border-b border-dark-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Logo size="sm" showText={false} />
           <span className="text-white font-bold">Super Admin</span>
         </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-dark-400 hover:text-white">
-          {mobileOpen ? <RiCloseLine className="text-2xl" /> : <RiMenuLine className="text-2xl" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <SANotificationBell />
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="text-dark-400 hover:text-white">
+            {mobileOpen ? <RiCloseLine className="text-2xl" /> : <RiMenuLine className="text-2xl" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-dark-900 border-r border-dark-800 z-50 animate-slide-in">
-            <Sidebar />
+            <SidebarInner onClose={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
@@ -94,8 +127,16 @@ const SuperAdminLayout = () => {
           </div>
         </div>
       </main>
+
+      <GlobalSearchModal />
     </div>
   );
 };
+
+const SuperAdminLayout = () => (
+  <SuperAdminProvider>
+    <SuperAdminLayoutInner />
+  </SuperAdminProvider>
+);
 
 export default SuperAdminLayout;

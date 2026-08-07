@@ -36,6 +36,17 @@ import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
 import SuperAdminAdmins    from './pages/SuperAdmin/SuperAdminAdmins';
 import SuperAdminUsers     from './pages/SuperAdmin/SuperAdminUsers';
 import SuperAdminViolations from './pages/SuperAdmin/SuperAdminViolations';
+import SAOverviewPage      from './pages/SuperAdmin/SA_Overview/SAOverviewPage';
+import SABusinessListPage  from './pages/SuperAdmin/SA_Businesses/SABusinessListPage';
+import SABusinessDetailPage from './pages/SuperAdmin/SA_BusinessDetail/SABusinessDetailPage';
+import SAPlansPage         from './pages/SuperAdmin/SA_Plans/SAPlansPage';
+import SASubscriptionRequestsPage from './pages/SuperAdmin/SA_SubscriptionRequests/SASubscriptionRequestsPage';
+import SAPaymentsPage      from './pages/SuperAdmin/SA_Payments/SAPaymentsPage';
+import SAUserMonitorPage   from './pages/SuperAdmin/SA_Users/SAUserMonitorPage';
+import SAAnalyticsPage     from './pages/SuperAdmin/SA_Analytics/SAAnalyticsPage';
+import SANotificationsPage from './pages/SuperAdmin/SA_Notifications/SANotificationsPage';
+import SASettingsPage      from './pages/SuperAdmin/SA_Settings/SASettingsPage';
+import SASecurityPage      from './pages/SuperAdmin/SA_Security/SASecurityPage';
 import AdminUpgradeRequests from './pages/Admin/AdminUpgradeRequests';
 import AdminAttendance  from './pages/Admin/AdminAttendance';
 import AdminFees        from './pages/Admin/AdminFees';
@@ -147,10 +158,20 @@ const AppRoutes = () => (
 
     {/* Super Admin */}
     <Route path="/super-admin" element={<SuperAdminRoute><SuperAdminLayout /></SuperAdminRoute>}>
-      <Route index              element={<SuperAdminDashboard />} />
-      <Route path="admins"      element={<SuperAdminAdmins />} />
-      <Route path="users"       element={<SuperAdminUsers />} />
-      <Route path="violations"  element={<SuperAdminViolations />} />
+      <Route index                        element={<SAOverviewPage />} />
+      <Route path="businesses"            element={<SABusinessListPage />} />
+      <Route path="businesses/:id"        element={<SABusinessDetailPage />} />
+      <Route path="plans"                 element={<SAPlansPage />} />
+      <Route path="subscription-requests" element={<SASubscriptionRequestsPage />} />
+      <Route path="payments"              element={<SAPaymentsPage />} />
+      <Route path="users"                 element={<SAUserMonitorPage />} />
+      <Route path="analytics"             element={<SAAnalyticsPage />} />
+      <Route path="notifications"         element={<SANotificationsPage />} />
+      <Route path="settings"              element={<SASettingsPage />} />
+      <Route path="security"              element={<SASecurityPage />} />
+      <Route path="violations"            element={<SuperAdminViolations />} />
+      <Route path="admins"                element={<SuperAdminAdmins />} />
+      <Route path="dashboard"             element={<SuperAdminDashboard />} />
     </Route>
 
     {/* Fallback */}

@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema(
       stripeCustomerId:     { type: String, default: null },
       stripeSubscriptionId: { type: String, default: null },
     },
+    businessId: { type: mongoose.Schema.Types.ObjectId, ref: 'Business', default: null },
   },
   { timestamps: true }
 );

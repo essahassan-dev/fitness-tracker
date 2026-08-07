@@ -4,9 +4,94 @@ const Nutrition  = require('../models/Nutrition');
 const Attendance = require('../models/Attendance');
 const Fee        = require('../models/Fee');
 const UserStats  = require('../models/UserStats');
+const Business   = require('../models/Business');
+const Payment    = require('../models/Payment');
+const SubscriptionRequest = require('../models/SubscriptionRequest');
 
-// ── Platform overview ──────────────────────────────────────────────────────────
-const getPlatformStats = async (req, res, next) => {
+// ── NEW: Full SaaS Dashboard Stats ────────────────────────────────────────────
+const getDashboardStats = async (req, res, next) => {
+  try {
+    const { from, to } = req.query;
+    if (from && to && new Date(from) > new Date(to)) {
+      return res.status(400).json({ success: false, message: 'Invalid date range: from must be before to' });
+    }
+
+    const now         = new Date();
+    const startOfDay  = new Date(now.setHours(0,0,0,0));
+    const startOfMonth= new Date(now.getFullYear(), now.getMonth(), 1);
+    const rangeFilter = from && to ? { $gte: new Date(from), $lte: new Date(to) } : null;
+
+    const [
+      totalBusinesses, activeBusinesses, suspendedBusinesses,
+      trialBusinesses, expiredBusinesses,
+      totalAdmins, totalTrainers, totalUsers,
+      activeUsersToday, newUsersThisMonth,
+      pendingRequests,
+      revenueAgg, monthlyRevenueAgg,
+    ] = await Promise.all([
+      Business.countDocuments({ deletedAt: null }),
+      Business.countDocuments({ status: 'active', deletedAt: null }),
+      Business.countDocuments({ status: 'suspended', deletedAt: null }),
+      Business.countDocuments({ status: 'trial', deletedAt: null }),
+      Business.countDocuments({ status: 'expired', deletedAt: null }),
+      User.countDocuments({ role: 'admin' }),
+      User.countDocuments({ role: 'trainer' }),
+      User.countDocuments({ role: 'user' }),
+      User.countDocuments({ role: 'user', updatedAt: { $gte: startOfDay } }),
+      User.countDocuments({ role: 'user', createdAt: { $gte: startOfMonth } }),
+      SubscriptionRequest.countDocuments({ status: 'pending' }),
+      Payment.aggregate([{ $match: { status: 'completed' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
+      Payment.aggregate([{ $match: { status: 'completed', createdAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
+    ]);
+
+    // Chart data — scoped to date range if provided
+    const chartMatch = rangeFilter ? { createdAt: rangeFilter } : {};
+    const [businessGrowth, userGrowth, revenueOverTime, planDistribution, activeVsInactive] = await Promise.all([
+      Business.aggregate([
+        { $match: { ...chartMatch, deletedAt: null } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      User.aggregate([
+        { $match: { ...chartMatch, role: 'user' } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      Payment.aggregate([
+        { $match: { ...chartMatch, status: 'completed' } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, revenue: { $sum: '$amount' } } },
+        { $sort: { _id: 1 } },
+      ]),
+      Business.aggregate([
+        { $match: { deletedAt: null } },
+        { $lookup: { from: 'subscriptionplans', localField: 'currentPlan', foreignField: '_id', as: 'plan' } },
+        { $unwind: { path: '$plan', preserveNullAndEmpty: true } },
+        { $group: { _id: '$plan.name', count: { $sum: 1 } } },
+      ]),
+      Business.aggregate([
+        { $match: { deletedAt: null } },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        kpis: {
+          totalBusinesses, activeBusinesses, suspendedBusinesses,
+          trialBusinesses, expiredBusinesses,
+          totalAdmins, totalTrainers, totalUsers,
+          activeUsersToday, newUsersThisMonth,
+          totalRevenue:   revenueAgg[0]?.total      || 0,
+          monthlyRevenue: monthlyRevenueAgg[0]?.total || 0,
+          pendingRequests,
+          pendingSupportTickets: 0,
+        },
+        charts: { businessGrowth, userGrowth, revenueOverTime, planDistribution, activeVsInactive },
+      },
+    });
+  } catch (err) { next(err); }
+};
   try {
     const [totalUsers, totalAdmins, totalTrainers, bannedUsers, premiumUsers,
       totalWorkouts, totalNutrition, totalFees, totalRevenue] = await Promise.all([
@@ -172,4 +257,4 @@ const banUser = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getPlatformStats, getAllAdmins, getAdminDetail, toggleAdminStatus, createAdmin, deleteAdmin, getAllUsers, banUser };
+module.exports = { getDashboardStats, getPlatformStats, getAllAdmins, getAdminDetail, toggleAdminStatus, createAdmin, deleteAdmin, getAllUsers, banUser };
