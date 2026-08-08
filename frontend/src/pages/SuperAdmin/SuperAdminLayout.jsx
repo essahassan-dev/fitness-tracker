@@ -91,9 +91,9 @@ const SuperAdminLayoutInner = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-dark-950">
+    <div className="flex h-screen overflow-hidden bg-dark-950">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-dark-900 border-r border-dark-800 h-screen sticky top-0 flex-shrink-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-dark-900 border-r border-dark-800 h-screen flex-shrink-0 overflow-y-auto">
         <SidebarInner onClose={() => {}} />
       </aside>
 
@@ -120,8 +120,8 @@ const SuperAdminLayoutInner = () => {
         </div>
       )}
 
-      <main className="flex-1 min-w-0">
-        <div className="pt-16 lg:pt-0 min-h-screen">
+      <main className="flex-1 min-w-0 h-screen overflow-y-auto">
+        <div className="pt-16 lg:pt-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
             <Outlet />
           </div>
