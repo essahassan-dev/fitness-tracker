@@ -13,48 +13,66 @@ const listBusinesses = async (req, res, next) => {
   try {
     const {
       page = 1, limit = 15, search = '',
-      status = 'all', plan = 'all', country = 'all',
+      status = 'all', plan = 'all',
       sort = '-createdAt',
     } = req.query;
 
-    const query = { deletedAt: null };
-    if (status !== 'all') query.status = status;
-    if (plan   !== 'all') query.currentPlan = plan;
-    if (country !== 'all') query.country = country;
+    // Strategy: query admins directly, then enrich with Business doc if exists
+    const userQuery = { role: 'admin', _id: { $ne: req.user._id } }; // exclude super_admin acting as admin
     if (search) {
-      const adminMatches = await User.find({
-        $or: [
-          { name:  { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-        ],
-        role: 'admin',
-      }).select('_id');
-      const adminIds = adminMatches.map(u => u._id);
-      query.$or = [
-        { name:      { $regex: search, $options: 'i' } },
-        { adminUser: { $in: adminIds } },
+      userQuery.$or = [
+        { name:  { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
-    const total      = await Business.countDocuments(query);
-    const businesses = await Business.find(query)
-      .populate('adminUser',   'name email phone')
-      .populate('currentPlan', 'name type price')
-      .sort(sort)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    const [admins, businesses] = await Promise.all([
+      User.find(userQuery).select('name email phone isActive createdAt').sort(sort),
+      Business.find().populate('adminUser', 'name email').populate('currentPlan', 'name type price'),
+    ]);
 
-    // Enrich with trainer/user counts
-    const enriched = await Promise.all(businesses.map(async (biz) => {
-      const tenantIds  = await getTenantUserIds(biz._id);
+    // Map business by adminUser _id
+    const bizMap = {};
+    businesses.forEach(b => { if (b.adminUser) bizMap[b.adminUser._id.toString()] = b; });
+
+    // Merge: create virtual business entry for each admin
+    let merged = admins.map(admin => {
+      const biz = bizMap[admin._id.toString()];
+      return {
+        _id:          biz?._id || admin._id,
+        isVirtual:    !biz, // no Business doc yet
+        name:         biz?.name || admin.name,
+        logoUrl:      biz?.logoUrl || '',
+        country:      biz?.country || '',
+        city:         biz?.city || '',
+        phone:        biz?.phone || admin.phone || '',
+        status:       biz?.status || (admin.isActive ? 'active' : 'suspended'),
+        currentPlan:  biz?.currentPlan || null,
+        storageUsedMB: biz?.storageUsedMB || 0,
+        subscriptionEnd: biz?.subscriptionEnd || null,
+        createdAt:    biz?.createdAt || admin.createdAt,
+        adminUser:    { _id: admin._id, name: admin.name, email: admin.email },
+        trainerCount: 0,
+        userCount:    0,
+      };
+    });
+
+    // Apply status filter
+    if (status !== 'all') merged = merged.filter(b => b.status === status);
+
+    // Enrich trainer/user counts
+    const enriched = await Promise.all(merged.map(async (biz) => {
       const [trainerCount, userCount] = await Promise.all([
-        User.countDocuments({ businessId: biz._id, role: 'trainer' }),
-        User.countDocuments({ businessId: biz._id, role: 'user' }),
+        User.countDocuments({ businessId: biz.adminUser._id, role: 'trainer' }),
+        User.countDocuments({ businessId: biz.adminUser._id, role: 'user' }),
       ]);
-      return { ...biz.toObject(), trainerCount, userCount };
+      return { ...biz, trainerCount, userCount };
     }));
 
-    res.json({ success: true, data: enriched, pagination: { total, page: Number(page), pages: Math.ceil(total / limit) } });
+    const total = enriched.length;
+    const paginated = enriched.slice((page - 1) * limit, page * limit);
+
+    res.json({ success: true, data: paginated, pagination: { total, page: Number(page), pages: Math.ceil(total / limit) } });
   } catch (err) { next(err); }
 };
 

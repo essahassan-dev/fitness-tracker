@@ -16,10 +16,13 @@ const getDashboardStats = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid date range: from must be before to' });
     }
 
-    const now         = new Date();
-    const startOfDay  = new Date(now.setHours(0,0,0,0));
-    const startOfMonth= new Date(now.getFullYear(), now.getMonth(), 1);
-    const rangeFilter = from && to ? { $gte: new Date(from), $lte: new Date(to) } : null;
+    const now          = new Date();
+    const startOfDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const rangeFilter  = (from && to) ? { $gte: new Date(from), $lte: new Date(to) } : null;
+
+    // deletedAt null OR not set
+    const notDeleted = { $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }] };
 
     const [
       totalBusinesses, activeBusinesses, suspendedBusinesses,
@@ -29,11 +32,11 @@ const getDashboardStats = async (req, res, next) => {
       pendingRequests,
       revenueAgg, monthlyRevenueAgg,
     ] = await Promise.all([
-      Business.countDocuments({ deletedAt: null }),
-      Business.countDocuments({ status: 'active', deletedAt: null }),
-      Business.countDocuments({ status: 'suspended', deletedAt: null }),
-      Business.countDocuments({ status: 'trial', deletedAt: null }),
-      Business.countDocuments({ status: 'expired', deletedAt: null }),
+      Business.countDocuments(notDeleted),
+      Business.countDocuments({ status: 'active',    ...notDeleted }),
+      Business.countDocuments({ status: 'suspended', ...notDeleted }),
+      Business.countDocuments({ status: 'trial',     ...notDeleted }),
+      Business.countDocuments({ status: 'expired',   ...notDeleted }),
       User.countDocuments({ role: 'admin' }),
       User.countDocuments({ role: 'trainer' }),
       User.countDocuments({ role: 'user' }),
@@ -44,11 +47,11 @@ const getDashboardStats = async (req, res, next) => {
       Payment.aggregate([{ $match: { status: 'completed', createdAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
     ]);
 
-    // Chart data — scoped to date range if provided
+    // Chart data
     const chartMatch = rangeFilter ? { createdAt: rangeFilter } : {};
     const [businessGrowth, userGrowth, revenueOverTime, planDistribution, activeVsInactive] = await Promise.all([
       Business.aggregate([
-        { $match: { ...chartMatch, deletedAt: null } },
+        { $match: { ...chartMatch, ...notDeleted } },
         { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
       ]),
@@ -62,14 +65,15 @@ const getDashboardStats = async (req, res, next) => {
         { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, revenue: { $sum: '$amount' } } },
         { $sort: { _id: 1 } },
       ]),
+      // Plan distribution — safe lookup without unwind crash
       Business.aggregate([
-        { $match: { deletedAt: null } },
+        { $match: notDeleted },
         { $lookup: { from: 'subscriptionplans', localField: 'currentPlan', foreignField: '_id', as: 'plan' } },
-        { $unwind: { path: '$plan', preserveNullAndEmpty: true } },
-        { $group: { _id: '$plan.name', count: { $sum: 1 } } },
+        { $project: { planName: { $ifNull: [{ $arrayElemAt: ['$plan.name', 0] }, 'No Plan'] } } },
+        { $group: { _id: '$planName', count: { $sum: 1 } } },
       ]),
       Business.aggregate([
-        { $match: { deletedAt: null } },
+        { $match: notDeleted },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
     ]);
@@ -82,7 +86,7 @@ const getDashboardStats = async (req, res, next) => {
           trialBusinesses, expiredBusinesses,
           totalAdmins, totalTrainers, totalUsers,
           activeUsersToday, newUsersThisMonth,
-          totalRevenue:   revenueAgg[0]?.total      || 0,
+          totalRevenue:   revenueAgg[0]?.total       || 0,
           monthlyRevenue: monthlyRevenueAgg[0]?.total || 0,
           pendingRequests,
           pendingSupportTickets: 0,
