@@ -264,14 +264,29 @@ const deleteUser = async (req, res, next) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     if (user.role === 'super_admin') return res.status(403).json({ success: false, message: 'Cannot delete super admin account' });
 
+    const Attendance = require('../models/Attendance');
+    const Fee        = require('../models/Fee');
+
     await Promise.all([
       Workout.deleteMany({ user: user._id }),
       Nutrition.deleteMany({ user: user._id }),
       Progress.deleteMany({ user: user._id }),
+      Attendance.deleteMany({ user: user._id }),     // cascade: remove all attendance
+      Fee.deleteMany({ user: user._id }),             // cascade: remove all fees
+      // Remove from any trainer's assignedUsers list
+      User.updateMany(
+        { assignedUsers: user._id },
+        { $pull: { assignedUsers: user._id } }
+      ),
+      // Clear assignedTrainer if this user was a trainer
+      User.updateMany(
+        { assignedTrainer: user._id },
+        { $unset: { assignedTrainer: '' } }
+      ),
       User.findByIdAndDelete(user._id),
     ]);
 
-    res.json({ success: true, message: 'User and all data deleted' });
+    res.json({ success: true, message: 'User and all related data deleted' });
   } catch (error) { next(error); }
 };
 

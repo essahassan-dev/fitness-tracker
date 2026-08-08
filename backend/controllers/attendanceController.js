@@ -162,8 +162,18 @@ const getTrainerAttendance = async (req, res, next) => {
       return res.json({ success: true, data: [], total: 0, todayCount: 0 });
     }
 
+    // Only include assigned users who still exist in the DB
+    const existingUsers = await User.find({
+      _id: { $in: trainer.assignedUsers },
+    }).select('_id');
+    const activeUserIds = existingUsers.map(u => u._id);
+
+    if (!activeUserIds.length) {
+      return res.json({ success: true, data: [], total: 0, todayCount: 0 });
+    }
+
     const { date } = req.query;
-    const query    = { user: { $in: trainer.assignedUsers } };
+    const query    = { user: { $in: activeUserIds } };
 
     if (date) {
       const d = new Date(date);
@@ -177,13 +187,16 @@ const getTrainerAttendance = async (req, res, next) => {
       .sort('-date')
       .limit(50);
 
+    // Filter out any records where populate returned null (edge case)
+    const valid = records.filter(r => r.user != null);
+
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const todayCount = await Attendance.countDocuments({
-      user: { $in: trainer.assignedUsers },
+      user: { $in: activeUserIds },
       date: { $gte: todayStart },
     });
 
-    res.json({ success: true, data: records, total: records.length, todayCount });
+    res.json({ success: true, data: valid, total: valid.length, todayCount });
   } catch (err) { next(err); }
 };
 
