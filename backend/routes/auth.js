@@ -60,4 +60,21 @@ router.get('/me',       protect, getMe);
 router.put('/profile',  protect, updateProfile);
 router.put('/password', protect, changePassword);
 
+// ── Set use mode (personal / gym) ─────────────────────────────────────────────
+router.put('/use-mode', protect, async (req, res, next) => {
+  try {
+    const { useMode } = req.body;
+    if (!['personal', 'gym'].includes(useMode)) {
+      return res.status(400).json({ success: false, message: 'useMode must be "personal" or "gym"' });
+    }
+    const User = require('../models/User');
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { useMode },
+      { new: true }
+    ).select('-password');
+    res.json({ success: true, data: user });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

@@ -75,8 +75,13 @@ export const AuthProvider = ({ children }) => {
     return true;
   };
 
+  // Convenience helpers for use mode
+  const isPersonalMode = () => user?.useMode === 'personal';
+  const isGymMode      = () => user?.useMode === 'gym' || !user?.useMode;
+  const needsModeSelect= () => user?.role === 'user' && !user?.useMode;
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser, loadUser, isPremium }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser, loadUser, isPremium, isPersonalMode, isGymMode, needsModeSelect }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,7 +5,7 @@ import {
   RiBarChartLine, RiUserLine, RiLogoutBoxLine, RiMenuLine, RiCloseLine,
   RiFlashlightLine, RiShieldLine, RiLightbulbLine, RiVipCrownLine,
   RiCalendarLine, RiUserHeartLine, RiQuestionLine, RiQrCodeLine,
-  RiTrophyLine, RiFileTextLine,
+  RiTrophyLine, RiFileTextLine, RiRefreshLine,
 } from 'react-icons/ri';
 import Logo from '../UI/Logo';
 import { useAuth } from '../../context/AuthContext';
@@ -29,10 +29,17 @@ const navItems = [
 ];
 
 const Sidebar = () => {
-  const { user, logout, isPremium } = useAuth();
+  const { user, logout, isPremium, isPersonalMode } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const premium = isPremium();
+  const premium    = isPremium();
+  const personal   = isPersonalMode();
+
+  // In personal mode, hide gym-specific nav items
+  const visibleNavItems = navItems.filter(item => {
+    if (personal && ['/attendance', '/rules'].includes(item.to)) return false;
+    return true;
+  });
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -45,7 +52,7 @@ const Sidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {visibleNavItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
@@ -97,6 +104,18 @@ const Sidebar = () => {
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-dark-800 space-y-2">
         <ThemeToggle />
+
+        {/* Switch mode button — only for regular users */}
+        {user?.role === 'user' && user?.useMode && (
+          <button
+            onClick={() => { navigate('/use-mode'); setMobileOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-dark-400 hover:text-white hover:bg-white/[0.08] transition-all text-sm font-medium"
+          >
+            <RiRefreshLine className="text-lg" />
+            <span>Switch Mode</span>
+            <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-dark-700 text-dark-400 capitalize">{user.useMode}</span>
+          </button>
+        )}
 
         {/* Upgrade CTA — only for regular free users */}
         {!premium && user?.role !== 'admin' && user?.role !== 'trainer' && user?.role !== 'super_admin' && (

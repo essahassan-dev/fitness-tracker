@@ -25,6 +25,7 @@ import Landing        from './pages/Landing/Landing';
 import Pricing         from './pages/Subscription/Pricing';
 import HowToUse        from './pages/HowToUse/HowToUse';
 import Rules            from './pages/Rules/Rules';
+import UseModeSelect   from './pages/Auth/UseModeSelect';
 
 // Admin pages
 import AdminDashboard   from './pages/Admin/AdminDashboard';
@@ -61,10 +62,12 @@ import TrainerFees         from './pages/Trainer/TrainerFees';
 
 // ── Route guards ───────────────────────────────────────────────────────────────
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, skipModeCheck = false }) => {
+  const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <LoadingSpinner fullScreen />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Redirect new regular users to mode selection (skip when on the mode select page itself)
+  if (!skipModeCheck && user?.role === 'user' && !user?.useMode) return <Navigate to="/use-mode" replace />;
   return children;
 };
 
@@ -119,6 +122,13 @@ const AppRoutes = () => (
 
     {/* Rules & Regulations — accessible to all authenticated users */}
     <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
+
+    {/* Mode selection — shown once after first login, or when switching */}
+    <Route path="/use-mode" element={
+      <ProtectedRoute skipModeCheck>
+        <UseModeSelect />
+      </ProtectedRoute>
+    } />
 
     {/* App — protected */}
     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
       stripeSubscriptionId: { type: String, default: null },
     },
     businessId: { type: mongoose.Schema.Types.ObjectId, ref: 'Business', default: null },
+    useMode:    { type: String, enum: ['personal', 'gym', null], default: null },
   },
   { timestamps: true }
 );

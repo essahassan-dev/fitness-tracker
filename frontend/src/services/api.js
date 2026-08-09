@@ -39,6 +39,7 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/password', data),
+  setUseMode: (useMode) => api.put('/auth/use-mode', { useMode }),
 };
 
 // Dashboard
